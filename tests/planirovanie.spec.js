@@ -24,7 +24,9 @@ async function editCell(page, id, m, value) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto(proto('proizvodstvo_planirovanie.html'));
+  // domcontentloaded: инлайн-скрипт прототипа выполняется при парсинге, ждать
+  // событие load (= загрузку @import-шрифтов с Google Fonts) не нужно
+  await page.goto(proto('proizvodstvo_planirovanie.html'), { waitUntil: 'domcontentloaded' });
 });
 
 test.describe('Стартовый рендер', () => {
@@ -260,19 +262,25 @@ test.describe('Добавление позиции', () => {
     await expect(page.locator('#mtx-body tr')).toHaveCount(7);
   });
 
-  test('сохранение пустой формы создаёт позицию с дефолтами прототипа', async ({ page }) => {
-    // в прототипе нет валидации: пустая форма даёт «Новая позиция», норму 0,2 и план 0
+  test('пустое название не сохраняется: модалка открыта, поле подсвечено и подсветка снимается', async ({ page }) => {
     await page.locator('#btnAdd').click();
+    await page.locator('#np-save').click();
+    // модалка остаётся открытой, позиция не создаётся
+    await expect(page.locator('#addModal')).toBeVisible();
+    await expect(page.locator('#mtx-body tr')).toHaveCount(7);
+    await expect(page.locator('#k-sku')).toHaveText('7');
+    // поле в фокусе и подсвечено янтарной рамкой (--amber: #E8920C)
+    const name = page.locator('#np-name');
+    await expect(name).toBeFocused();
+    await expect(name).toHaveCSS('border-color', 'rgb(232, 146, 12)');
+    // подсветка временная (~900мс): инлайн-стиль снимается сам
+    await expect(name).not.toHaveAttribute('style', /amber/, { timeout: 3000 });
+    // после ввода названия сохранение работает
+    await name.fill('АКБ после валидации');
     await page.locator('#np-save').click();
     await expect(page.locator('#addModal')).toBeHidden();
     await expect(page.locator('#mtx-body tr')).toHaveCount(8);
-    const sel = page.locator('#mtx-body tr.sel');
-    await expect(sel.locator('.skn')).toHaveText('Новая позиция');
-    await expect(sel.locator('.skm')).toHaveText('№8 · норма 0,2 н.ч/шт');
-    await expect(sel.locator('td[data-m="0"]')).toHaveText('0');
-    await expect(sel.locator('td.yr')).toHaveText('0');
-    await expect(page.locator('#k-sku')).toHaveText('8');
-    await expect(page.locator('#k-year')).toHaveText('4620'); // нулевой план не меняет нормо-часы
+    await expect(page.locator('#mtx-body tr.sel .skn')).toHaveText('АКБ после валидации');
   });
 });
 

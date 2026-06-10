@@ -74,10 +74,10 @@ test.describe('Стартовый рендер доски', () => {
     await expect(card(page, '274')).toHaveClass(/sel/);
     await expect(page.locator('#d-no')).toHaveText('№274');
     await expect(page.locator('#d-title')).toHaveText('Аккумулятор LiFePO4 RADIAN LF12200-02 12V 200Ah');
-    // renderDetail() на старте затирает статическую разметку: «10,0» -> «10», cov-warn -> cov-bad
+    // renderDetail() на старте затирает статическую разметку: «10,0» -> «10»; covCls:'warn' из данных приоритетнее порога (cov=72 дал бы bad)
     await expect(page.locator('#d-nh-total')).toHaveText('10');
     await expect(page.locator('#d-bom-tag')).toHaveText('72%');
-    await expect(page.locator('#d-bom-tag')).toHaveClass('tag cov-bad');
+    await expect(page.locator('#d-bom-tag')).toHaveClass('tag cov-warn');
     await expect(page.locator('#d-prog-pct')).toHaveText('0');
     await expect(page.locator('#d-prog-op')).toHaveText('ожидает корпус ABS');
   });
@@ -116,6 +116,40 @@ test.describe('Карта изделия: выбор карточки', () => {
     await expect(first.locator('.st')).toHaveText('готово');
     await expect(rows.nth(1).locator('.st')).toHaveClass('st run');
     await expect(rows.nth(1).locator('.st')).toHaveText('идёт');
+  });
+
+  test('операции №248: у ненормированных строк факт «—», статусы без «undefined»', async ({ page }) => {
+    await card(page, '248').click();
+    const rows = page.locator('#d-ops tr');
+    await expect(rows).toHaveCount(5);
+    await expect(page.locator('#d-ops')).not.toContainText('undefined');
+    for (const row of await rows.all()) {
+      await expect(row.locator('.st')).toHaveClass(/^st (ok|run|plan|done|warn|bad)$/);
+    }
+    const mod = rows.filter({ hasText: 'Установка модуля тока' });
+    await expect(mod.locator('td').nth(2)).toHaveText('—'); // н.ч план
+    await expect(mod.locator('td').nth(3)).toHaveText('—'); // н.ч факт
+    await expect(mod.locator('.st')).toHaveClass('st run');
+    await expect(mod.locator('.st')).toHaveText('идёт');
+    await expect(rows.nth(3).locator('.st')).toHaveText('идёт'); // Опрессовка выводов 0,5мм
+    await expect(rows.nth(4).locator('.st')).toHaveText('план');
+    await expect(page.locator('#d-nh-done')).toHaveText('4,3 ч'); // факт только по сварке: 4,25 -> до десятых
+  });
+
+  test('операции №250: статусы «готово/идёт» в таблице, выработка 10 ч', async ({ page }) => {
+    await card(page, '250').click();
+    const rows = page.locator('#d-ops tr');
+    await expect(rows).toHaveCount(4);
+    await expect(page.locator('#d-ops')).not.toContainText('undefined');
+    const fill = rows.nth(1);
+    await expect(fill.locator('td').nth(0)).toHaveText('Заливка компаундом');
+    await expect(fill.locator('td').nth(3)).toHaveText('—');
+    await expect(fill.locator('.st')).toHaveClass('st done');
+    await expect(fill.locator('.st')).toHaveText('готово');
+    await expect(rows.nth(2).locator('.st')).toHaveClass('st run');
+    await expect(rows.nth(2).locator('.st')).toHaveText('идёт');
+    await expect(rows.nth(3).locator('.st')).toHaveText('идёт');
+    await expect(page.locator('#d-nh-done')).toHaveText('10 ч'); // факт только по «Сборке»
   });
 
   test('нормо-часы №243: 40 н.ч, факт 7,3 ч, стоимость и премия', async ({ page }) => {

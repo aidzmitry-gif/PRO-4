@@ -3,7 +3,8 @@ const { test, expect } = require('@playwright/test');
 const { proto } = require('./helpers');
 
 test.beforeEach(async ({ page }) => {
-  await page.goto(proto('proizvodstvo_otk.html'));
+  // не ждём 'load': file://-прототип тянет внешние шрифты/аватар, инлайн-скрипт исполняется до DOMContentLoaded
+  await page.goto(proto('proizvodstvo_otk.html'), { waitUntil: 'domcontentloaded' });
 });
 
 /* Хелпер: дозаполнить протокол №250 до состояния «можно принять»
@@ -252,6 +253,38 @@ test.describe('Решение · доработка', () => {
   });
 });
 
+test.describe('Очередь · пустое состояние', () => {
+
+  test('Расход всей очереди: склонение счётчика и заглушка протокола', async ({ page }) => {
+    test.slow(); // 25 расходов единиц — расходуем через доработку (2 действия на единицу)
+    const consume = async n => {
+      for (let i = 0; i < n; i++) {
+        await page.locator('#re-reason').selectOption({ label: 'Маркировка · этикетка / паспорт' });
+        await page.locator('#btnRe').click();
+      }
+    };
+    await consume(1); // №250 · 1 шт
+    await expect(page.locator('#k-q-f')).toHaveText('3 позиции в очереди');
+    await consume(3); // №259 · 3 шт
+    await expect(page.locator('#k-q-f')).toHaveText('2 позиции в очереди');
+    await consume(8); // №260 · 8 шт
+    await expect(page.locator('#k-q-f')).toHaveText('1 позиция в очереди');
+    await consume(13); // №255 · 13 шт — очередь пуста
+    await expect(page.locator('#k-q-f')).toHaveText('0 позиций в очереди');
+    await expect(page.locator('#k-q')).toHaveText('0');
+    await expect(page.locator('.qitem')).toHaveCount(0);
+    // протокол скрыт, показана заглушка, решения недоступны
+    await expect(page.locator('#proto-empty')).toBeVisible();
+    await expect(page.locator('#proto-empty')).toHaveText('Очередь пуста — все позиции обработаны');
+    await expect(page.locator('#proto .dec')).toBeHidden();
+    await expect(page.locator('#btnOk')).toBeHidden();
+    await expect(page.locator('#btnRe')).toBeHidden();
+    await expect(page.locator('#btnScrap')).toBeHidden();
+    await expect(page.locator('#btnEsc')).toBeHidden();
+    await expect(page.locator('#ckwrap')).toBeHidden();
+  });
+});
+
 test.describe('Решение · брак', () => {
 
   test('Модалка акта: предзаполнение полей', async ({ page }) => {
@@ -359,5 +392,26 @@ test.describe('Эскалация несоответствия', () => {
     await expect(page.locator('.qitem')).toHaveCount(4);
     await expect(page.locator('#p-no')).toHaveText('№250');
     await expect(page.locator('#k-q')).toHaveText('25');
+  });
+
+  test('Без получателей пакет не отправляется: модалка не закрывается, блок подсвечен', async ({ page }) => {
+    await page.locator('#ckwrap .ms[data-k="cap"] input').fill('95');
+    await page.locator('#btnEsc').click();
+    await expect(page.locator('#escModal')).toBeVisible();
+    await page.locator('#esc-buyer').uncheck();
+    await page.locator('#esc-boss').uncheck();
+    await page.locator('#esc-confirm').click();
+    // подсветка блока получателей рамкой var(--amber) на ~900мс
+    await expect(page.locator('#esc-rcp')).toHaveCSS('border-color', 'rgb(232, 146, 12)');
+    await expect(page.locator('#escModal')).toBeVisible();
+    await expect(page.locator('#r-esc-cnt')).toHaveText('1');
+    await expect(page.locator('#jbody tr')).toHaveCount(3);
+    // вернули руководителя — пакет уходит как обычно
+    await page.locator('#esc-boss').check();
+    await page.locator('#esc-confirm').click();
+    await expect(page.locator('#escModal')).toBeHidden();
+    await expect(page.locator('#r-esc-cnt')).toHaveText('2');
+    await expect(page.locator('#r-esc .rrow .rt').first()).toHaveText('Несоответствие → руководителю');
+    await expect(page.locator('#jbody tr').first().locator('.jres')).toHaveText('НС передано · руководителю');
   });
 });

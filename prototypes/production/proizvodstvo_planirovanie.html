@@ -476,7 +476,10 @@ document.getElementById('btnEdit').addEventListener('click', ()=>openModal(CURRE
 document.getElementById('np-cancel').addEventListener('click', closeModal);
 modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
 document.getElementById('np-save').addEventListener('click', ()=>{
-const name=document.getElementById('np-name').value.trim();
+const nameInp=document.getElementById('np-name');
+const name=nameInp.value.trim();
+// при добавлении название обязательно; при редактировании пустое имя просто не меняет название
+if(!EDIT_ID && !name){ nameInp.focus(); nameInp.style.borderColor='var(--amber)'; setTimeout(()=>nameInp.style.borderColor='',900); return; }
 let norm=parseFloat(document.getElementById('np-norm').value.replace(',','.')); if(isNaN(norm)||norm<0) norm=0.2;
 if(EDIT_ID){
 const s=SKU.find(x=>x.id===EDIT_ID);
@@ -489,7 +492,7 @@ const keep=EDIT_ID; recompute(); closeModal(); renderAll(); selectSKU(keep);
 } else {
 let qty=parseInt(document.getElementById('np-qty').value,10); if(isNaN(qty)||qty<0) qty=0;
 const id='sku_'+Date.now();
-SKU.push({id, no:String(SKU.length+1), title:name||'Новая позиция', norm, plan:Array(12).fill(qty), ops:[['Сборка',norm]]});
+SKU.push({id, no:String(SKU.length+1), title:name, norm, plan:Array(12).fill(qty), ops:[['Сборка',norm]]});
 recompute(); closeModal(); renderAll(); selectSKU(id);
 document.getElementById('detail').scrollIntoView({behavior:'smooth',block:'nearest'});
 }

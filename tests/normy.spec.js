@@ -6,7 +6,11 @@ const row = (page, text) => page.locator('#ntbody tr.itm').filter({ hasText: tex
 const selRow = page => page.locator('#ntbody tr.itm.sel');
 
 test.beforeEach(async ({ page }) => {
-  await page.goto(proto('proizvodstvo_normy.html'));
+  // Прототип тянет Google Fonts через @import — на медленной сети событие load
+  // подвисает. Блокируем сеть: file://-страница самодостаточна, а скрипт
+  // выполняется синхронно в конце body, т.е. к domcontentloaded всё готово.
+  await page.route(/^https?:\/\//, r => r.abort());
+  await page.goto(proto('proizvodstvo_normy.html'), { waitUntil: 'domcontentloaded' });
 });
 
 test.describe('Стартовый рендер', () => {
@@ -69,6 +73,14 @@ test.describe('Стартовый рендер', () => {
     await expect(page.locator('#rt-body tr[data-i]')).toHaveCount(15);
     await expect(page.locator('#rt-tag')).toHaveText('15 опер. · Σ 3,3 н.ч');
     await expect(page.locator('#rt-foot .dev-tag')).toHaveText('сходится с нормой');
+  });
+
+  test('склонение «позиция/позиции/позиций» для разных N', async ({ page }) => {
+    const words = await page.evaluate(ns => ns.map(n => posWord(n)), [1, 2, 4, 5, 11, 14, 21, 22, 25, 100, 111]);
+    expect(words).toEqual([
+      'позиция', 'позиции', 'позиции', 'позиций', 'позиций', 'позиций',
+      'позиция', 'позиции', 'позиций', 'позиций', 'позиций',
+    ]);
   });
 });
 
@@ -203,7 +215,7 @@ test.describe('Добавление нормы', () => {
     await expect(page.locator('#d-min')).toHaveText('норма не установлена');
     await expect(page.locator('#d-status')).toHaveText('нет нормы');
     await expect(page.locator('#k-none')).toHaveText('5');
-    await expect(page.locator('#op-none')).toHaveText('5 позиции');
+    await expect(page.locator('#op-none')).toHaveText('5 позиций');
     await expect(page.locator('#r-nonecnt')).toHaveText('5');
 
     await page.locator('#btnAdd').click();
@@ -212,6 +224,7 @@ test.describe('Добавление нормы', () => {
     await page.locator('#np-save').click();
     await expect(row(page, 'Минусовая норма X2').locator('.stx')).toHaveText('нет нормы');
     await expect(page.locator('#k-none')).toHaveText('6');
+    await expect(page.locator('#op-none')).toHaveText('6 позиций');
   });
 
   test('отмена, Escape и клик по фону не добавляют запись', async ({ page }) => {

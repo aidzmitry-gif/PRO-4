@@ -283,6 +283,8 @@
 const COST=25, PREM=6.25, SHIFT=7.5, RMIN=0.002, RMAX=26;
 const fmt=n=>{const r=Math.round(n*1000)/1000;return r.toString().replace('.', ',');};
 const money=n=>{const r=Math.round(n*100)/100;return r.toLocaleString('ru-RU');};
+/* 1 позиция · 2–4 позиции · 5+ позиций; 11–14 — всегда «позиций» */
+const posWord=n=>n%10===1&&n%100!==11?'позиция':([2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?'позиции':'позиций');
 let NID=0; const N=(cat,title,norm,note,st)=>({id:'n'+(++NID),cat,title,norm,note:note||'',st:st||'ok',kind:'prod'});
 const NORMS=[
 // Ni-MH стандартные сборки
@@ -433,7 +435,7 @@ document.getElementById('k-range').textContent=`${fmt(RMIN)}–${fmt(RMAX)} ч`;
 const mx=ALL.reduce((a,b)=>(b.norm>a.norm?b:a));
 document.getElementById('k-max').textContent=money(mx.norm*COST);
 document.getElementById('k-max-f').textContent=mx.title;
-document.getElementById('op-none').textContent=`${none} позиции`;
+document.getElementById('op-none').textContent=`${none} ${posWord(none)}`;
 // summary
 document.getElementById('s-prod').textContent=prod.length;
 document.getElementById('s-ops').textContent=ops.length;

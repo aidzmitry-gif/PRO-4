@@ -884,8 +884,10 @@ svg{display:block}
       <div class="fld"><label>Источник несоответствия</label>
         <select id="esc-src" class="fsel"><option value="comp">Комплектующее · вина поставщика</option><option value="asm">Сборка · внутренний</option></select></div>
       <div class="fld" id="esc-comp-fld"><label>Комплектующее · поставщик</label><select id="esc-comp" class="fsel"></select></div>
-      <div class="chk"><input type="checkbox" id="esc-buyer" checked><label for="esc-buyer">Передать <b>закупщику</b> — претензия поставщику</label></div>
-      <div class="chk"><input type="checkbox" id="esc-boss" checked><label for="esc-boss">Уведомить <b>руководителя производства</b></label></div>
+      <div id="esc-rcp" style="display:flex;flex-direction:column;gap:13px;border:1px solid transparent;border-radius:10px;padding:5px;margin:-6px">
+        <div class="chk"><input type="checkbox" id="esc-buyer" checked><label for="esc-buyer">Передать <b>закупщику</b> — претензия поставщику</label></div>
+        <div class="chk"><input type="checkbox" id="esc-boss" checked><label for="esc-boss">Уведомить <b>руководителя производства</b></label></div>
+      </div>
       <div class="hintx">К пакету приложатся: паспорт изделия, протокол измерений, фото, № партии комплектующего. Решение по единице (доработка / брак) принимается отдельно.</div>
     </div>
     <div class="mc-foot">
@@ -957,6 +959,7 @@ ITEMS['250'].st.meas={u:'13,28', d:'18', r:'24,5'};
 
 const fmt=v=>String(v).replace('.', ',');
 const num=v=>parseFloat(String(v).replace(',','.'));
+const plural=(n,one,few,many)=>{const m10=n%10,m100=n%100;return m10===1&&m100!==11?one:m10>=2&&m10<=4&&(m100<12||m100>14)?few:many;};
 
 /* ===== Queue ===== */
 function buildQueue(){
@@ -973,7 +976,7 @@ function buildQueue(){
   const units=ORDER.reduce((s,id)=>s+ITEMS[id].qty,0);
   document.getElementById('k-q').textContent=units;
   document.getElementById('k-q-bar').style.width=Math.min(100,units*3)+'%';
-  document.getElementById('k-q-f').textContent=`${ORDER.length} позиции в очереди`;
+  document.getElementById('k-q-f').textContent=`${ORDER.length} ${plural(ORDER.length,'позиция','позиции','позиций')} в очереди`;
 }
 
 /* ===== Protocol ===== */
@@ -1086,7 +1089,14 @@ function consumeUnit(){
   it.qty-=1;
   if(it.qty<=0){ const i=ORDER.indexOf(CUR); ORDER.splice(i,1); CUR=ORDER[0]||null; }
   buildQueue();
-  if(CUR) renderProto();
+  if(CUR) renderProto(); else renderEmpty();
+}
+function renderEmpty(){
+  // очередь пуста: прячем протокол и решения (inline display — атрибут hidden перебивается классовыми display:flex/grid)
+  const p=document.getElementById('proto');
+  [...p.children].forEach(c=>{ if(c.id!=='proto-empty') c.style.display='none'; });
+  if(!document.getElementById('proto-empty'))
+    p.insertAdjacentHTML('beforeend','<div class="empty" id="proto-empty" style="text-align:center;padding:46px 16px;font-size:13px">Очередь пуста — все позиции обработаны</div>');
 }
 function bumpShift(){
   SHIFT_OK++;
@@ -1192,6 +1202,12 @@ document.getElementById('esc-cancel').addEventListener('click',()=>escM.hidden=t
 escM.addEventListener('click',e=>{ if(e.target===escM) escM.hidden=true; });
 document.getElementById('esc-confirm').addEventListener('click',()=>{
   const it=ITEMS[CUR];
+  // ни одного получателя — отправлять некому: модалку не закрываем, подсвечиваем блок (паттерн пустой причины доработки)
+  if(!document.getElementById('esc-buyer').checked&&!document.getElementById('esc-boss').checked){
+    const rcp=document.getElementById('esc-rcp');
+    rcp.style.borderColor='var(--amber)'; setTimeout(()=>rcp.style.borderColor='transparent',900);
+    return;
+  }
   const reason=document.getElementById('esc-reason').value.trim()||'несоответствие';
   const sent=sendPack(it, reason, 'esc-src','esc-comp','esc-buyer','esc-boss','Несоответствие');
   if(sent.length) log('re','re','НС передано · '+sent.join(' + '));
