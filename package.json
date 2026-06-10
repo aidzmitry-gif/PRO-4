@@ -1,0 +1,12 @@
+{
+  "name": "pro4-prototypes-tests",
+  "private": true,
+  "description": "Функциональные тесты HTML-прототипов модуля «Производство» (Playwright/Chromium)",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
