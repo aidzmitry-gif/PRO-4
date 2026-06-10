@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<!-- ERP · Производство · ОТК — приёмка, чек-лист, анализатор, акты -->
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERP · Производство · ОТК · контроль качества</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --bg:#EEF1F6; --panel:#FFFFFF; --panel-2:#F8FAFC;
+  --ink:#0F172A; --ink-2:#475569; --ink-3:#8A97A8; --ink-4:#B4BECC;
+  --line:#E5EAF1; --line-2:#EEF2F7;
+  --pri:#2F6BFF; --pri-600:#1E54E6; --pri-50:#EAF0FF;
+  --ai:#7C5CFF; --ai-bg:#F3EFFF; --ai-600:#6A48F0;
+  --green:#16A34A; --green-bg:#E7F7EE; --green-soft:#22C55E;
+  --red:#E5484D; --red-bg:#FDECEC;
+  --amber:#E8920C; --amber-bg:#FEF3D9;
+  --blue:#3B82F6; --blue-bg:#E7F0FE;
+  --indigo:#6366F1; --indigo-bg:#EEF0FF;
+  --teal:#14B8A6; --teal-bg:#E2F7F3;
+  --s1:#3B82F6; --s2:#8B5CF6; --s3:#F59E0B; --s4:#06B6D4; --s5:#EC4899;
+  --s6:#14B8A6; --s7:#6366F1; --s8:#F97316; --s9:#22C55E;
+  --r:14px; --r-sm:10px; --r-xs:8px;
+  --sh-card:0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.05);
+  --sh-pop:0 12px 30px rgba(15,23,42,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);
+  font-family:'Manrope','Segoe UI',system-ui,-apple-system,sans-serif;
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01";}
+.num,.tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+::selection{background:#D8E2FF}
+svg{display:block}
+.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:16px;height:16px}
+.ico.xs{width:13px;height:13px;stroke-width:2}
+
+/* ===== App shell ===== */
+.app{display:grid;grid-template-columns:236px minmax(0,1fr) 312px;min-height:100vh;min-width:1280px}
+
+/* ===== Left nav ===== */
+.nav{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh;
+  display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 8px 16px}
+.brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#2F6BFF,#6A48F0);
+  display:grid;place-items:center;box-shadow:0 6px 14px rgba(47,107,255,.30)}
+.brand .logo svg{width:20px;height:20px;stroke:#fff;stroke-width:2}
+.brand b{font-size:19px;font-weight:800;letter-spacing:.2px}
+.nav-cap{font-size:10.5px;font-weight:700;color:var(--ink-4);letter-spacing:1.2px;padding:8px 10px 4px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;color:var(--ink-2);
+  font-weight:600;font-size:13.5px;text-decoration:none;cursor:pointer;transition:.15s}
+.nav a:hover{background:var(--panel-2);color:var(--ink)}
+.nav a .ico{color:var(--ink-3)}
+.nav a.active{background:var(--pri);color:#fff;box-shadow:0 6px 14px rgba(47,107,255,.28)}
+.nav a.active .ico{color:#fff}
+.nav .sub{display:flex;flex-direction:column;gap:2px;margin:2px 0 6px 16px;padding-left:12px;border-left:1.5px solid var(--line-2)}
+.nav .sub a{padding:7px 11px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.nav .sub a.active{background:transparent;color:var(--pri);box-shadow:none;font-weight:700}
+.nav .sub a.active:hover{background:var(--pri-50)}
+.nav-spacer{flex:1}
+.nav-user{display:flex;align-items:center;gap:10px;padding:10px;border-top:1px solid var(--line);margin-top:6px}
+.nav-user .av{width:36px;height:36px;border-radius:50%;background:#0F172A url('https://i.pravatar.cc/72?img=12') center/cover;
+  border:2px solid #fff;box-shadow:var(--sh-card)}
+.nav-user .nm{font-weight:700;font-size:13.5px;line-height:1.2}
+.nav-user .rl{font-size:11.5px;color:var(--ink-3)}
+
+/* ===== Main ===== */
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;gap:16px;padding:16px 22px;background:var(--panel);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20}
+.crumb{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;white-space:nowrap}
+.crumb .m{color:var(--ink-4);font-weight:700}
+.crumb .sep{color:var(--ink-4);font-weight:500}
+.search{flex:1;max-width:430px;display:flex;align-items:center;gap:9px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:11px;padding:9px 13px;color:var(--ink-3)}
+.search input{border:0;background:transparent;outline:0;flex:1;font:inherit;font-size:13.5px;color:var(--ink)}
+.search input::placeholder{color:var(--ink-3)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:11px;border:1px solid var(--line);
+  background:var(--panel);font:inherit;font-weight:700;font-size:13px;color:var(--ink-2);cursor:pointer;white-space:nowrap;transition:.15s}
+.btn:hover{background:var(--panel-2);border-color:#D7DEE8}
+.btn .ico{color:var(--ink-3)}
+.btn--ai{background:var(--ai-bg);border-color:#E4DBFF;color:var(--ai-600)}
+.btn--ai .ico{color:var(--ai)}
+.btn--ai:hover{background:#ECE5FF}
+.btn--pri{background:var(--pri);border-color:var(--pri);color:#fff;box-shadow:0 6px 14px rgba(47,107,255,.28)}
+.btn--pri .ico{color:#fff}
+.btn--pri:hover{background:var(--pri-600)}
+.btn--split{padding-right:9px;gap:9px}
+.btn--split .div{width:1px;height:18px;background:rgba(255,255,255,.35);margin-left:1px}
+.icon-btn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;
+  color:var(--ink-2);cursor:pointer;position:relative;transition:.15s}
+.icon-btn:hover{background:var(--panel-2)}
+.dotn{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--red);color:#fff;
+  font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid #fff}
+.dotn.ai{background:var(--ai)}
+
+.scroll{flex:1;overflow:auto;padding:18px 22px 0}
+
+/* ===== KPI ===== */
+.section-h{display:flex;align-items:baseline;gap:10px;margin:2px 2px 12px}
+.section-h h2{font-size:15px;font-weight:800}
+.section-h .mut{font-size:12.5px;color:var(--ink-3);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh-card)}
+.kpi-h{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.kpi-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none}
+.kpi-ic .ico{width:17px;height:17px}
+.kpi-h .t{font-size:12px;font-weight:700;color:var(--ink-2);line-height:1.25}
+.kpi-val{font-size:21px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:baseline;gap:6px}
+.kpi-val .of{font-size:12.5px;font-weight:700;color:var(--ink-4)}
+.kpi-val .cur{font-size:14px;font-weight:700;color:var(--ink-3)}
+.bar{height:6px;border-radius:99px;background:var(--line-2);margin:10px 0 6px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px}
+.kpi-foot{font-size:11px;font-weight:700;color:var(--ink-3)}
+.kpi-foot.warn{color:var(--amber)} .kpi-foot.bad{color:var(--red)} .kpi-foot.ok{color:var(--green)}
+.ic-blue{background:var(--blue-bg);color:#2563EB}
+.ic-green{background:var(--green-bg);color:var(--green)}
+.ic-ai{background:var(--ai-bg);color:var(--ai)}
+.ic-amber{background:var(--amber-bg);color:var(--amber)}
+.ic-cyan{background:#E2F6FA;color:#0891B2}
+.ic-indigo{background:var(--indigo-bg);color:var(--indigo)}
+.ic-teal{background:var(--teal-bg);color:var(--teal)}
+.ic-red{background:var(--red-bg);color:var(--red)}
+.f-blue{background:linear-gradient(90deg,#3B82F6,#60A5FA)}
+.f-green{background:linear-gradient(90deg,#16A34A,#22C55E)}
+.f-ai{background:linear-gradient(90deg,#7C5CFF,#A78BFA)}
+.f-amber{background:linear-gradient(90deg,#E8920C,#F6B445)}
+.f-cyan{background:linear-gradient(90deg,#0891B2,#22C0DD)}
+.f-indigo{background:linear-gradient(90deg,#6366F1,#A5B4FC)}
+.f-teal{background:linear-gradient(90deg,#14B8A6,#5EEAD4)}
+.f-red{background:linear-gradient(90deg,#E5484D,#F08C8F)}
+
+/* ===== AI insight bar ===== */
+.ai-bar{margin:14px 0 4px;display:flex;align-items:center;gap:13px;background:linear-gradient(100deg,#F3EFFF,#EAF0FF);
+  border:1px solid #E1D8FF;border-radius:var(--r);padding:12px 16px}
+.ai-bar .spark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#7C5CFF,#2F6BFF);display:grid;place-items:center;flex:none;
+  box-shadow:0 6px 14px rgba(124,92,255,.30)}
+.ai-bar .spark .ico{stroke:#fff;width:17px;height:17px}
+.ai-bar .txt{font-size:13px;color:var(--ink);font-weight:600;line-height:1.4}
+.ai-bar .txt b{color:var(--ai-600);font-weight:800}
+.ai-bar .acts{margin-left:auto;display:flex;gap:8px;flex:none}
+.pill-ai{padding:7px 13px;border-radius:9px;background:var(--ai);color:#fff;font-weight:700;font-size:12.5px;border:0;cursor:pointer}
+.pill-gh{padding:7px 13px;border-radius:9px;background:#fff;color:var(--ai-600);font-weight:700;font-size:12.5px;border:1px solid #E1D8FF;cursor:pointer}
+
+/* ===== Toolbar above board ===== */
+.board-tools{display:flex;align-items:center;gap:12px;margin:16px 2px 12px;flex-wrap:wrap}
+.board-tools h2{font-size:15px;font-weight:800}
+.seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 9px;border-radius:7px;cursor:pointer;color:var(--ink-3);display:grid;place-items:center}
+.seg button.active{background:#fff;color:var(--pri);box-shadow:var(--sh-card)}
+.tag-soft{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--ink-2);
+  background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 12px}
+.tag-soft .dot{width:7px;height:7px;border-radius:50%}
+.bt-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.period{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 12px}
+.hint{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink-3)}
+
+/* ===== Kanban board ===== */
+.board{display:flex;gap:14px;overflow-x:auto;padding-bottom:18px;scroll-snap-type:x proximity}
+.board::-webkit-scrollbar{height:10px}
+.board::-webkit-scrollbar-thumb{background:#D2DAE5;border-radius:99px;border:3px solid var(--bg)}
+.board::-webkit-scrollbar-track{background:transparent}
+.col{flex:0 0 266px;width:266px;scroll-snap-align:start;display:flex;flex-direction:column;animation:rise .5s both}
+.col-head{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:12px;
+  padding:12px 14px;box-shadow:var(--sh-card)}
+.col-head .ct{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px}
+.col-head .ct .pin{width:8px;height:8px;border-radius:3px;background:var(--ac)}
+.col-head .ct .cap{font-size:10px;font-weight:800;color:var(--ink-4);letter-spacing:.3px;margin-left:auto}
+.col-head .cs{margin-top:5px;font-size:11.5px;font-weight:700;color:var(--ink-3);display:flex;gap:8px;align-items:center}
+.col-head .cs b{color:var(--ink-2)}
+.col-head .cs .sum{color:var(--ink);font-weight:800}
+.col-body{display:flex;flex-direction:column;gap:11px;padding:11px 4px 8px;border-radius:12px;transition:.12s;min-height:60px}
+.col-body.over{background:var(--pri-50);outline:2px dashed #BFD2FF;outline-offset:-2px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;box-shadow:var(--sh-card);cursor:grab;
+  transition:box-shadow .16s, transform .16s, border-color .16s;position:relative}
+.card:hover{box-shadow:0 6px 18px rgba(15,23,42,.10);transform:translateY(-1px);border-color:#D7DEE8}
+.card:active{cursor:grabbing}
+.card.dragging{opacity:.55;box-shadow:0 16px 32px rgba(15,23,42,.18);transform:rotate(1.4deg)}
+.card.sel{border-color:var(--s7);box-shadow:0 0 0 2px rgba(99,102,241,.20),0 6px 18px rgba(99,102,241,.12)}
+.c-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.po{font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.2px}
+.badge{font-size:10px;font-weight:800;padding:3px 7px;border-radius:7px;letter-spacing:.2px;white-space:nowrap}
+.b-high{background:var(--red-bg);color:var(--red)}
+.b-mid{background:var(--amber-bg);color:var(--amber)}
+.b-low{background:#EEF2F7;color:var(--ink-3)}
+.b-qc{background:#E2F6FA;color:#0891B2}
+.c-title{font-weight:800;font-size:13.5px;line-height:1.3;margin-bottom:3px}
+.c-sub{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);font-weight:600;margin-bottom:9px}
+.c-sub .ico{width:14px;height:14px;color:var(--ink-3)}
+.row{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin:3px 0}
+.row .k{color:var(--ink-3);font-weight:600}
+.row .v{font-weight:700;color:var(--ink)}
+.qty-big{font-size:15px;font-weight:800;letter-spacing:-.2px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:7px;background:var(--panel-2);
+  border:1px solid var(--line);color:var(--ink-2)}
+.chip .ico{width:12px;height:12px}
+/* materials availability chips — комплектующие */
+.chip--ready{background:#E7F7EE;border-color:#CFEFDC;color:#15803D}
+.chip--wait{background:var(--amber-bg);border-color:#F4E3B5;color:var(--amber)}
+.chip--short{background:#FDECEC;border-color:#F7D4D4;color:var(--red)}
+.chip--resv{background:#EAF0FF;border-color:#D7E2FF;color:#2563EB}
+.chip--qc{background:#E2F6FA;border-color:#CBEBF2;color:#0891B2}
+
+.ai-line{display:flex;align-items:flex-start;gap:7px;background:var(--ai-bg);border:1px solid #E8E0FF;border-radius:9px;
+  padding:7px 9px;margin:8px 0;font-size:11.5px;line-height:1.35;color:#4C3D9E;font-weight:600}
+.ai-line .sp{width:15px;height:15px;flex:none;margin-top:.5px;color:var(--ai)}
+.ai-line b{color:var(--ai-600);font-weight:800}
+
+.miniprog{margin:8px 0 4px}
+.miniprog .lab{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--ink-2);margin-bottom:5px}
+.miniprog .lab .v{color:var(--ink);font-weight:800}
+.miniprog .track{height:6px;border-radius:99px;background:var(--line-2);overflow:hidden}
+.miniprog .track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6366F1,#A78BFA)}
+.miniprog.warn .track i{background:linear-gradient(90deg,#E8920C,#F6B445)}
+
+.c-foot{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:9px;border-top:1px solid var(--line-2)}
+.who{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.who .av{width:22px;height:22px;border-radius:50%;background:#cbd5e1 center/cover;border:1.5px solid #fff;box-shadow:var(--sh-card)}
+.who .crew{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--indigo-bg);color:var(--indigo);border:1.5px solid #fff}
+.who .crew .ico{width:13px;height:13px}
+.when{font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.when.over{color:var(--red)}
+
+.kv2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.kv2 .b{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px}
+.kv2 .b .l{font-size:10.5px;font-weight:700;color:var(--ink-3)}
+.kv2 .b .n{font-size:14px;font-weight:800;color:var(--ink)}
+.kv2 .b .n.pos{color:var(--green)}
+
+.add-card{border:1.5px dashed var(--line);background:transparent;border-radius:12px;padding:11px;color:var(--ink-3);font-weight:700;font-size:12.5px;
+  display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.15s}
+.add-card:hover{border-color:var(--pri);color:var(--pri);background:var(--pri-50)}
+
+/* ===== Detail / Command-center panel ===== */
+.detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-card);padding:16px 18px;margin:4px 0 16px}
+.detail-h{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.detail-h .dt{font-size:11px;font-weight:800;color:var(--ink-3);letter-spacing:.4px}
+.detail-h .dh{font-size:15px;font-weight:800;letter-spacing:-.2px}
+.detail-h .dh em{font-style:normal;color:var(--pri)}
+.detail-h .acts{margin-left:auto;display:flex;gap:8px}
+.dtabs{display:flex;gap:4px;border-bottom:1px solid var(--line-2);margin-bottom:16px;flex-wrap:wrap}
+.dtab{padding:8px 12px;border-radius:9px 9px 0 0;font-size:12.5px;font-weight:700;color:var(--ink-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.dtab:hover{color:var(--ink-2)}
+.dtab.active{color:var(--pri);border-bottom-color:var(--pri)}
+
+/* horizontal route timeline */
+.tl{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;margin:2px 2px 20px;padding-top:4px}
+.tl .node{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:0 4px}
+.tl .node::before{content:"";position:absolute;top:16px;left:-50%;width:100%;height:2.5px;background:var(--line);z-index:0}
+.tl .node:first-child::before{display:none}
+.tl .node.done::before,.tl .node.cur::before{background:var(--green-soft)}
+.tl .dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2.5px solid var(--line);
+  color:var(--ink-4);z-index:1;position:relative;font-size:10px;font-weight:800}
+.tl .dot .ico{width:16px;height:16px}
+.tl .node.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.tl .node.cur .dot{border-color:var(--amber);color:var(--amber);box-shadow:0 0 0 5px var(--amber-bg)}
+.tl .node.risk .dot{border-color:var(--red);color:var(--red);background:#fff}
+.tl .lab{font-size:11px;font-weight:800;color:var(--ink-3);line-height:1.2}
+.tl .node.done .lab,.tl .node.cur .lab{color:var(--ink-2)}
+.tl .node.cur .lab{color:var(--amber)}
+.tl .dtt{font-size:10.5px;font-weight:700;color:var(--ink-4)}
+.tl .dtt.over{color:var(--red)}
+
+.dgrid{display:grid;grid-template-columns:1.08fr .84fr 1.12fr .92fr;gap:13px}
+.dcard{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px}
+.dcard .dc-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--ink-2);margin-bottom:11px}
+.dcard .dc-h .ico{width:15px;height:15px;color:var(--ink-3)}
+.dcard .dc-h .tag{margin-left:auto;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px}
+.ftab{width:100%;border-collapse:collapse;font-size:11.5px}
+.ftab th{text-align:left;font-weight:700;color:var(--ink-3);padding:3px 5px;border-bottom:1px solid var(--line-2);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+.ftab th.r,.ftab td.r{text-align:right}
+.ftab td{padding:6px 5px;border-bottom:1px solid var(--line-2);font-weight:700;color:var(--ink)}
+.ftab tr:last-child td{border-bottom:0}
+.ftab td.k{color:var(--ink-2);font-weight:700}
+.st{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;white-space:nowrap}
+.st .ico{width:11px;height:11px}
+.st.ok{background:var(--green-bg);color:var(--green)}
+.st.run{background:var(--indigo-bg);color:var(--indigo)}
+.st.plan{background:#EEF2F7;color:var(--ink-3)}
+.st.warn{background:var(--amber-bg);color:var(--amber)}
+.st.bad{background:var(--red-bg);color:var(--red)}
+.risk-big{font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1}
+.risk-sub{font-size:11.5px;font-weight:700;color:var(--ink-2);margin:5px 0 11px}
+.risk-li{display:flex;gap:7px;align-items:flex-start;font-size:11.5px;font-weight:600;color:var(--ink-2);margin:6px 0}
+.risk-li .b{width:6px;height:6px;border-radius:50%;margin-top:5px;flex:none}
+.dc-link{margin-top:11px;font-size:12px;font-weight:800;color:var(--pri);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.dc-link .ico{width:14px;height:14px}
+.kpiline{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.kpiline .n{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.kpiline .s{font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.dmini{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.dmini .b{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 9px}
+.dmini .b .l{font-size:10px;font-weight:700;color:var(--ink-3)}
+.dmini .b .n{font-size:13.5px;font-weight:800}
+.ld{margin:8px 0}
+.ld .l{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.ld .l b{color:var(--ink)}
+.ld .t{height:6px;border-radius:99px;background:var(--line-2);overflow:hidden}
+.ld .t i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6366F1,#A5B4FC)}
+.ld .t i.hot{background:linear-gradient(90deg,#E8920C,#F6B445)}
+.empty{font-size:11.5px;color:var(--ink-3);font-weight:600;padding:12px 4px;line-height:1.4}
+
+/* ===== Bottom summary ===== */
+.summary{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-card);margin:2px 0 22px;padding:18px 22px}
+.sum-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sum-h h3{font-size:15px;font-weight:800}
+.sum-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.sum-cell{padding:0 16px;border-left:1px solid var(--line-2)}
+.sum-cell:first-child{border-left:0;padding-left:0}
+.sum-cell .l{font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:7px}
+.sum-cell .n{font-size:24px;font-weight:800;letter-spacing:-.4px}
+.sum-cell .d{font-size:11.5px;font-weight:800;margin-top:5px;display:inline-flex;align-items:center;gap:4px}
+.up{color:var(--green)} .dn{color:var(--red)}
+
+/* ===== Right rail (Цех · сегодня) ===== */
+.aside{background:var(--panel);border-left:1px solid var(--line);position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.aside-h{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+.aside-h .t{font-weight:800;font-size:15px}
+.date-pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--ink-2);background:var(--panel-2);
+  border:1px solid var(--line);border-radius:9px;padding:6px 10px}
+.date-pill .ico{width:14px;height:14px;color:var(--ink-3)}
+.shiftbar{margin:0 18px;padding:13px 0 4px;border-bottom:1px solid var(--line-2)}
+.shiftbar .sh-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
+.shiftbar .sh-top .l{font-size:11px;font-weight:800;color:var(--ink-3);letter-spacing:.4px}
+.shiftbar .sh-top .v{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.shiftbar .sh-top .v .of{font-size:13px;color:var(--ink-4)}
+.shiftbar .track{height:8px;border-radius:99px;background:var(--line-2);overflow:hidden}
+.shiftbar .track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2F6BFF,#60A5FA)}
+.shiftbar .sh-foot{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--ink-3);margin:7px 0 3px}
+.railscroll{flex:1;overflow-y:auto;padding:6px 14px 10px}
+.rail-cap{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;color:var(--ink-4);letter-spacing:.8px;padding:14px 4px 8px}
+.rail-cap .cnt{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:99px;color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center}
+.rail-cap .cnt.red{background:var(--red)} .rail-cap .cnt.ai{background:var(--ai)} .rail-cap .cnt.blue{background:var(--pri)}
+.rrow{display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:10px;cursor:pointer;transition:.12s}
+.rrow:hover{background:var(--panel-2)}
+.rrow .ric{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center}
+.rrow .ric .ico{width:16px;height:16px}
+.ric.red{background:var(--red-bg);color:var(--red)} .ric.amber{background:var(--amber-bg);color:var(--amber)}
+.ric.cyan{background:#E2F6FA;color:#0891B2} .ric.indigo{background:var(--indigo-bg);color:var(--indigo)} .ric.green{background:var(--green-bg);color:var(--green)}
+.rrow .rtx{flex:1;min-width:0}
+.rrow .rtx .rt{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.25}
+.rrow .rtx .rs{font-size:11px;font-weight:700;color:var(--ink-3);margin-top:1px}
+.rrow .rc{font-size:10px;font-weight:800;color:#fff;background:var(--red);border-radius:99px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;flex:none}
+.rrow .rc.amber{background:var(--amber)}
+.rec{display:flex;gap:10px;padding:11px 9px;border-radius:11px}
+.rec:hover{background:var(--panel-2)}
+.rec .ric{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,#7C5CFF,#2F6BFF)}
+.rec .ric .ico{width:17px;height:17px;stroke:#fff}
+.rec .rb{flex:1;min-width:0}
+.rec .rb .rt{font-size:12px;font-weight:700;color:var(--ink-2);line-height:1.35}
+.rec .rb .rt b{color:var(--ai-600);font-weight:800}
+.rec .rb .ra{margin-top:7px;display:flex;gap:7px}
+.rec .rb .ra button{font:inherit;font-size:11px;font-weight:800;border-radius:8px;padding:5px 10px;cursor:pointer;border:1px solid var(--line)}
+.rec .rb .ra .y{background:var(--ai);color:#fff;border-color:var(--ai)}
+.rec .rb .ra .n{background:#fff;color:var(--ink-2)}
+.rail-link{padding:6px 6px 4px;text-align:center}
+.rail-link a{color:var(--pri);font-weight:800;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.divln{height:1px;background:var(--line-2);margin:8px 4px}
+
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.col:nth-child(1){animation-delay:.02s}.col:nth-child(2){animation-delay:.06s}.col:nth-child(3){animation-delay:.1s}
+.col:nth-child(4){animation-delay:.14s}.col:nth-child(5){animation-delay:.18s}.col:nth-child(6){animation-delay:.22s}
+
+/* ===== Supplement · Производство · Воронка сборки ===== */
+
+/* operational attention bar (NON-AI, прототип) */
+.op-bar{margin:14px 0 4px;display:flex;align-items:center;gap:13px;background:linear-gradient(100deg,#FEF3D9,#FFF8EC);
+  border:1px solid #F4E1AE;border-radius:var(--r);padding:12px 16px}
+.op-bar .ob-ic{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#E8920C,#F6B445);display:grid;place-items:center;flex:none;
+  box-shadow:0 6px 14px rgba(232,146,12,.28)}
+.op-bar .ob-ic .ico{stroke:#fff;width:18px;height:18px}
+.op-bar .txt{font-size:13px;color:var(--ink);font-weight:600;line-height:1.4}
+.op-bar .txt b{color:#B45309;font-weight:800}
+.op-bar .acts{margin-left:auto;display:flex;gap:8px;flex:none}
+.pill-w{padding:7px 13px;border-radius:9px;background:#fff;color:#B45309;font-weight:800;font-size:12.5px;border:1px solid #F4E1AE;cursor:pointer}
+.pill-w.solid{background:var(--amber);color:#fff;border-color:var(--amber)}
+
+/* норма-час accent chip on cards */
+.nh{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--indigo);
+  background:var(--indigo-bg);border:1px solid #DADDFB;border-radius:8px;padding:3px 9px}
+.nh .ico{width:13px;height:13px}
+.nh.lg{font-size:12.5px}
+/* qty done/total mini bar */
+.qrow{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin:5px 0 2px}
+.qrow .k{color:var(--ink-3);font-weight:600}
+.qrow .v{font-weight:800;color:var(--ink)}
+.qbar{height:5px;border-radius:99px;background:var(--line-2);overflow:hidden;margin:5px 0 2px}
+.qbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#16A34A,#22C55E)}
+.tagA{font-size:10px;font-weight:800;padding:3px 7px;border-radius:7px;background:#FFF3D6;color:#B45309;border:1px solid #F4E1AE}
+
+/* worker output rows (rail) — выработка нормо-часов */
+.wrk{display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:10px}
+.wrk:hover{background:var(--panel-2)}
+.wrk .av{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;
+  border:1.5px solid #fff;box-shadow:var(--sh-card)}
+.wrk .wb{flex:1;min-width:0}
+.wrk .wtop{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.wrk .wn{font-size:12.5px;font-weight:700;color:var(--ink)}
+.wrk .wv{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap}
+.wrk .wv .of{color:var(--ink-4);font-weight:700}
+.wrk .wt{height:6px;border-radius:99px;background:var(--line-2);overflow:hidden;margin-top:5px}
+.wrk .wt i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6366F1,#A78BFA)}
+.wrk .wt i.lo{background:linear-gradient(90deg,#E8920C,#F6B445)}
+.wrk .wt i.hi{background:linear-gradient(90deg,#16A34A,#22C55E)}
+.wrk .wp{font-size:10.5px;font-weight:800;color:var(--ink-3);margin-top:3px}
+.wrk .wp b{color:var(--green)}
+
+/* deferred AI placeholder — Итерация 1 (visually separated, not functional) */
+.ai-soon{margin:8px 4px 6px;border:1.5px dashed #D9D2F2;background:linear-gradient(180deg,#FBFAFF,#F7F9FC);border-radius:12px;padding:12px 13px}
+.ai-soon .as-h{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.ai-soon .as-ic{width:26px;height:26px;border-radius:8px;background:#EDE7FF;display:grid;place-items:center;flex:none}
+.ai-soon .as-ic .ico{width:15px;height:15px;color:var(--ai)}
+.ai-soon .as-t{font-size:12px;font-weight:800;color:var(--ink-2)}
+.ai-soon .as-badge{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.4px;color:var(--ai-600);background:#fff;border:1px solid #E1D8FF;border-radius:99px;padding:3px 8px}
+.ai-soon .as-li{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;font-weight:600;color:var(--ink-3);margin:5px 0}
+.ai-soon .as-li .ico{width:13px;height:13px;color:var(--ink-4);margin-top:2px;flex:none}
+.ai-soon .as-note{font-size:10.5px;font-weight:700;color:var(--ink-4);margin-top:8px;line-height:1.4;padding-top:8px;border-top:1px dashed #E7E2F5}
+
+/* coverage tag */
+.cov-ok{background:var(--green-bg);color:var(--green)}
+.cov-warn{background:var(--amber-bg);color:var(--amber)}
+.cov-bad{background:var(--red-bg);color:var(--red)}
+
+/* small inline op label on card */
+.opnow{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--indigo);margin:7px 0 2px}
+.opnow .ico{width:13px;height:13px}
+
+/* add-position modal */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(2px)}
+.modal[hidden]{display:none}
+.modal-card{width:430px;max-width:92vw;background:var(--panel);border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.30);border:1px solid var(--line);overflow:hidden}
+.mc-h{padding:16px 18px;font-size:15px;font-weight:800;color:var(--ink);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.mc-h .ico{width:18px;height:18px;color:var(--pri)}
+.mc-b{padding:16px 18px;display:flex;flex-direction:column;gap:13px}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:11px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.3px}
+.fld input{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;-moz-appearance:textfield}
+.fld input::-webkit-outer-spin-button,.fld input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.fld input:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-50)}
+.fld .hintx{font-size:11px;font-weight:600;color:var(--ink-4)}
+.mc-foot{padding:14px 18px;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid var(--line);background:var(--panel-2)}
+
+/* row edit pencil + delete modal */
+.skrow{display:flex;align-items:center;gap:8px}
+.skrow .skt{flex:1;min-width:0}
+.rowed{flex:none;width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;opacity:0;transition:.12s}
+.rowed .ico{width:13px;height:13px;color:var(--ink-3)}
+.mtx tbody tr:hover .rowed,.mtx tbody tr.sel .rowed{opacity:1}
+.rowed:hover{border-color:var(--pri);background:var(--pri-50)}
+.rowed:hover .ico{color:var(--pri)}
+.mc-h--danger{color:var(--red)}
+.mc-h--danger .ico{color:var(--red)}
+.btn--danger{background:var(--red);border-color:var(--red);color:#fff;font-weight:800}
+.btn--danger:hover{filter:brightness(.95)}
+.btn--danger .ico{stroke:#fff;color:#fff}
+.del-name{font-size:13.5px;font-weight:800;color:var(--ink);background:var(--red-bg);border:1px solid #F6CBCD;border-radius:10px;padding:10px 12px}
+
+
+/* ===== Supplement #5 · ОТК ===== */
+
+/* layout: queue | protocol */
+.otk-grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px;align-items:start}
+
+/* queue */
+.qlist{display:flex;flex-direction:column;gap:9px}
+.qitem{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;cursor:pointer;box-shadow:var(--sh-card);transition:.12s}
+.qitem:hover{border-color:#C9D6F2}
+.qitem.sel{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-50)}
+.qitem .qt{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.qitem .po{font-size:11px;font-weight:800;color:var(--ink-3);letter-spacing:.3px}
+.qitem .qn{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.35;margin-bottom:7px}
+.qitem .qb{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--ink-3)}
+.qmode{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;margin-left:auto;white-space:nowrap}
+.qmode.full{background:var(--blue-bg);color:var(--blue)}
+.qmode.aql{background:var(--indigo-bg);color:var(--indigo)}
+.qmode.re{background:var(--amber-bg);color:var(--amber)}
+
+/* protocol passport */
+.pass{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 12px}
+.pass .b{background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;padding:8px 10px}
+.pass .l{font-size:9.5px;font-weight:800;color:var(--ink-4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.pass .n{font-size:12.5px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* checklist */
+.ckg{margin:0 0 12px}
+.ckg-h{font-size:10.5px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.4px;margin:0 0 7px;display:flex;align-items:center;gap:7px}
+.ckg-h .cnt2{font-size:10px;font-weight:800;color:var(--ink-4)}
+.ck{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:6px;background:var(--panel)}
+.ck .ct{flex:1;font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.35}
+.ck.ok{border-color:#CBE8D4;background:#F4FBF6}
+.ck.bad{border-color:#F3C6C8;background:#FDF4F4}
+.ckbtns{display:flex;gap:6px;flex:none}
+.ckb{width:30px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;transition:.1s}
+.ckb .ico{width:14px;height:14px;color:var(--ink-4)}
+.ckb.on-ok{background:var(--green);border-color:var(--green)}
+.ckb.on-ok .ico{color:#fff;stroke:#fff}
+.ckb.on-bad{background:var(--red);border-color:var(--red)}
+.ckb.on-bad .ico{color:#fff;stroke:#fff}
+.ckb:hover{border-color:var(--ink-4)}
+
+/* measurements */
+.ms{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:6px;background:var(--panel)}
+.ms .mt{flex:1;font-size:12.5px;font-weight:600;color:var(--ink)}
+.ms .tol{font-size:10.5px;font-weight:700;color:var(--ink-4);white-space:nowrap}
+.ms input{width:86px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12.5px;font-weight:800;text-align:right;font-family:inherit;color:var(--ink);outline:none;-moz-appearance:textfield}
+.ms input::-webkit-outer-spin-button,.ms input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ms input:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-50)}
+.ms .un{font-size:11px;font-weight:800;color:var(--ink-3);width:34px}
+.mtag{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;min-width:86px;text-align:center;white-space:nowrap}
+.mtag.ok{background:var(--green-bg);color:var(--green)}
+.mtag.bad{background:var(--red-bg);color:var(--red)}
+.mtag.na{background:var(--panel-2);color:var(--ink-4);border:1px solid var(--line-2)}
+.ms.ok{border-color:#CBE8D4}.ms.bad{border-color:#F3C6C8;background:#FDF4F4}
+
+/* decision bar */
+.dec{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel-2);margin-top:4px}
+.dec .ready{font-size:12px;font-weight:700;color:var(--ink-2)}
+.dec .ready b{color:var(--ink)}
+.dec .sp{margin-left:auto;display:flex;align-items:center;gap:9px}
+.dec select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:12.5px;font-family:inherit;color:var(--ink);background:var(--panel);outline:none;max-width:230px}
+.dec select:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-50)}
+.dec input{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:12.5px;font-family:inherit;color:var(--ink);background:var(--panel);outline:none;width:210px}
+.dec input:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-50)}
+.dec input::placeholder{color:var(--ink-3)}
+.btn--ok{background:var(--green);border-color:var(--green);color:#fff;font-weight:800}
+.btn--ok .ico{stroke:#fff}
+.btn--ok:disabled{opacity:.45;cursor:not-allowed}
+.btn--warn{background:var(--amber);border-color:var(--amber);color:#fff;font-weight:800}
+.btn--warn .ico{stroke:#fff}
+.btn--warn:disabled{opacity:.45;cursor:not-allowed}
+
+/* journal */
+.jrn td{padding:10px 12px;border-bottom:1px solid var(--line-2);font-size:12.5px;vertical-align:middle}
+.jrn tr:last-child td{border-bottom:0}
+.jrn .tm{color:var(--ink-3);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.jrn .nm2{font-weight:700;color:var(--ink)}
+.jres{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:7px;white-space:nowrap}
+.jres.ok{background:var(--green-bg);color:var(--green)}
+.jres.re{background:var(--amber-bg);color:var(--amber)}
+.jres.scrap{background:var(--red-bg);color:var(--red)}
+
+/* pareto (rail) */
+.par{padding:7px 8px}
+.par .pl2{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.par .pl2 b{color:var(--ink)}
+.par .pt2{height:6px;border-radius:99px;background:var(--line-2);overflow:hidden}
+.par .pt2 i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#F2787C,#E5484D)}
+
+
+
+/* topbar shrink (узкие ширины) */
+.topbar .crumb{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1}
+.search{min-width:120px}
+.search input{min-width:0}
+
+/* escalation modal bits */
+.fsel{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit;color:var(--ink);background:var(--panel);outline:none}
+.fsel:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-50)}
+.chk{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.4}
+.chk input{width:16px;height:16px;accent-color:var(--pri);margin-top:1px;flex:none}
+.chk input:disabled{accent-color:var(--ink-4)}
+.chk b{color:var(--ink)}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></symbol>
+<symbol id="i-crm" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6a3 3 0 0 1 0 6"/><path d="M16.5 14a5 5 0 0 1 4 5"/></symbol>
+<symbol id="i-cart" viewBox="0 0 24 24"><path d="M4 5h2l2 11h9l2-8H7"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></symbol>
+<symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 21V9l5 3V9l5 3V7l6 3v11z"/><path d="M7 17h2M12 17h2M17 17h0.5"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="5" ry="2.6"/><path d="M4 7v4c0 1.4 2.2 2.6 5 2.6s5-1.2 5-2.6V7"/><ellipse cx="15" cy="14" rx="5" ry="2.6"/><path d="M10 14.5V17c0 1.4 2.2 2.6 5 2.6s5-1.2 5-2.6v-3"/></symbol>
+<symbol id="i-mega" viewBox="0 0 24 24"><path d="M4 10v4l10 4V6z"/><path d="M14 9a3 3 0 0 1 0 6"/><path d="M5 14v3h2"/></symbol>
+<symbol id="i-headset" viewBox="0 0 24 24"><path d="M5 13a7 7 0 0 1 14 0"/><rect x="3.5" y="13" width="3.5" height="6" rx="1.5"/><rect x="17" y="13" width="3.5" height="6" rx="1.5"/><path d="M19 19a3 3 0 0 1-3 2.5h-2"/></symbol>
+<symbol id="i-team" viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.6"/><circle cx="16" cy="9" r="2.6"/><path d="M3.5 19a4.5 4.5 0 0 1 9 0M11.5 19a4.5 4.5 0 0 1 9 0"/></symbol>
+<symbol id="i-bar" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 20v-6M11 20V6M16 20v-9"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.5M12 18.5V21M21 12h-2.5M5.5 12H3M18 6l-1.8 1.8M7.8 16.2 6 18M18 18l-1.8-1.8M7.8 7.8 6 6"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7.5V19l-4 2v-8.5z"/></symbol>
+<symbol id="i-funnel" viewBox="0 0 24 24"><path d="M4 5h16l-6 7.5V18l-4 2v-7.5z"/><circle cx="18" cy="6" r="2.5"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9z"/><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 3z"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.7.3-.9.8-.9 1.4v.6"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 10h16M8 3v4M16 3v4"/></symbol>
+<symbol id="i-ware" viewBox="0 0 24 24"><path d="M3 9l9-5 9 5v11H3z"/><path d="M7 20v-6h10v6"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="M4 16l5-5 4 4 7-7"/><path d="M17 8h4v4"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l4.5 4.5L19 7"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 3 20h18z"/><path d="M12 10v4M12 17h.01"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M6 4h3l2 5-2 1.5a11 11 0 0 0 4.5 4.5L15 13l5 2v3a2 2 0 0 1-2 2A15 15 0 0 1 4 6a2 2 0 0 1 2-2"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="m4 8 8 5 8-5"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M21 4 3 11l6 2 2 6z"/><path d="M21 4 11 13"/></symbol>
+<symbol id="i-bot" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/><path d="M5 12H3M21 12h-2"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 13h5M10 16h5"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.5"/><path d="M8 7l1.5-2h5L16 7"/></symbol>
+<symbol id="i-stack" viewBox="0 0 24 24"><path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="M3 12l9 4.5L21 12M3 16.5 12 21l9-4.5"/></symbol>
+<symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 6a3.5 3.5 0 0 0-4.6 4.3L4 16.2 7.8 20l5.9-5.9A3.5 3.5 0 0 0 18 9.5l-2.3 2.3-1.4-1.4L16.6 8z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 13h5l-1 8 8-10h-5z"/></symbol>
+<symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5V14a4 4 0 0 0 4 4h5.5"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="M3 12l9 4.5L21 12"/></symbol>
+<symbol id="i-pkg" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10M7.5 5.2l9 4"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l4-3"/><circle cx="12" cy="15" r="1"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3-2 4-2 7a2 2 0 0 0 4 0c1 1.5 2 2.7 2 5a4 4 0 0 1-8 0c0-3 2-4 4-12z"/></symbol>
+</defs></svg>
+
+<div class="app">
+
+<!-- ===================== LEFT NAV ===================== -->
+<nav class="nav">
+  <div class="brand"><span class="logo"><svg viewBox="0 0 24 24"><use href="#i-stack"/></svg></span><b>ERP</b></div>
+  <div class="nav-cap">МОДУЛИ</div>
+  <a><svg class="ico"><use href="#i-home"/></svg>Главная</a>
+  <a><svg class="ico"><use href="#i-crm"/></svg>CRM</a>
+  <a><svg class="ico"><use href="#i-cart"/></svg>Закупки</a>
+  <a class="active"><svg class="ico"><use href="#i-factory"/></svg>Производство</a>
+  <div class="sub">
+    <a>Воронка сборки</a>
+    <a>Заявки на сборку</a>
+    <a>Спецификации · BOM</a>
+    <a>Планирование · план/факт</a>
+    <a>Нормы и нормативы</a>
+    <a>Выработка и оценка</a>
+    <a class="active">ОТК · контроль качества</a>
+    <a>Аналитика</a>
+  </div>
+  <a><svg class="ico"><use href="#i-box"/></svg>Склад</a>
+  <a><svg class="ico"><use href="#i-truck"/></svg>Логистика</a>
+  <a><svg class="ico"><use href="#i-coins"/></svg>Финансы</a>
+  <a><svg class="ico"><use href="#i-mega"/></svg>Маркетинг</a>
+  <a><svg class="ico"><use href="#i-headset"/></svg>Сервис и поддержка</a>
+  <a><svg class="ico"><use href="#i-team"/></svg>HR</a>
+  <a><svg class="ico"><use href="#i-bar"/></svg>Аналитика</a>
+  <a><svg class="ico"><use href="#i-gear"/></svg>IT и настройки</a>
+  <div class="nav-spacer"></div>
+  <div class="nav-user">
+    <span class="av"></span>
+    <div><div class="nm">Сидоров А. С.</div><div class="rl">Начальник производства</div></div>
+    <svg class="ico sm" style="margin-left:auto;color:var(--ink-4)"><use href="#i-chev"/></svg>
+  </div>
+</nav>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+  <header class="topbar">
+    <div class="crumb"><span class="m">Производство</span><span class="sep">/</span><span>ОТК · контроль качества</span></div>
+    <div class="search"><svg class="ico sm"><use href="#i-search"/></svg><input placeholder="Поиск: №, изделие…"></div>
+    <div class="tb-right">
+      <button class="btn"><svg class="ico sm"><use href="#i-doc"/></svg>Журнал</button>
+      <button class="btn"><svg class="ico sm"><use href="#i-cal"/></svg>Смена № 1</button>
+      <button class="btn btn--pri"><svg class="ico sm"><use href="#i-shield"/></svg>Принять партию</button>
+    </div>
+  </header>
+
+  <div class="scroll">
+
+    <div class="section-h"><h2>ОТК · приёмка изделий</h2><span class="mut">вторник, 09.06.2026 · контролёр: Никита · прогон через анализатор АКБ</span></div>
+
+    <!-- ===== KPI strip ===== -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-h"><span class="kpi-ic ic-blue"><svg class="ico"><use href="#i-shield"/></svg></span><span class="t">Очередь на ОТК</span></div>
+        <div class="kpi-val"><span class="num" id="k-q">—</span><span class="cur">шт</span></div>
+        <div class="bar"><i class="f-blue" id="k-q-bar"></i></div>
+        <div class="kpi-foot" id="k-q-f">— позиции</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-h"><span class="kpi-ic ic-green"><svg class="ico"><use href="#i-check"/></svg></span><span class="t">FPY · с первого раза</span></div>
+        <div class="kpi-val"><span class="num">89</span><span class="cur">%</span></div>
+        <div class="bar"><i class="f-green" style="width:89%"></i></div>
+        <div class="kpi-foot">first pass yield · месяц</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-h"><span class="kpi-ic ic-cyan"><svg class="ico"><use href="#i-gauge"/></svg></span><span class="t">Pass-rate с доработкой</span></div>
+        <div class="kpi-val"><span class="num">96</span><span class="cur">%</span></div>
+        <div class="bar"><i class="f-cyan" style="width:96%"></i></div>
+        <div class="kpi-foot ok">цель ≥ 95%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-h"><span class="kpi-ic ic-amber"><svg class="ico"><use href="#i-wrench"/></svg></span><span class="t">На доработке</span></div>
+        <div class="kpi-val"><span class="num" id="k-re">2</span><span class="cur">шт</span></div>
+        <div class="bar"><i class="f-amber" id="k-re-bar" style="width:20%"></i></div>
+        <div class="kpi-foot warn">1 изделие &gt; 24 ч</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-h"><span class="kpi-ic ic-red"><svg class="ico"><use href="#i-alert"/></svg></span><span class="t">Брак · месяц</span></div>
+        <div class="kpi-val"><span class="num">1,8</span><span class="cur">%</span></div>
+        <div class="bar"><i class="f-red" style="width:18%"></i></div>
+        <div class="kpi-foot">9 шт · 2 акта списания</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-h"><span class="kpi-ic ic-indigo"><svg class="ico"><use href="#i-clock"/></svg></span><span class="t">Среднее время контроля</span></div>
+        <div class="kpi-val"><span class="num">14</span><span class="cur">мин</span></div>
+        <div class="bar"><i class="f-indigo" style="width:56%"></i></div>
+        <div class="kpi-foot">на изделие · вкл. прогон</div>
+      </div>
+    </div>
+
+    <!-- ===== Operational attention bar (без ИИ) ===== -->
+    <div class="op-bar">
+      <span class="ob-ic"><svg class="ico"><use href="#i-alert"/></svg></span>
+      <div class="txt">№250 RADIAN 12V: 1 изделие на повторном прогоне <b>больше 24 часов</b> — не держит ёмкость. Партия №260 (26 шт) ждёт выборочную приёмку <b>AQL · 8 образцов</b>.</div>
+      <div class="acts">
+        <button class="pill-w">Открыть №250</button>
+        <button class="pill-w solid">Начать приёмку №260</button>
+      </div>
+    </div>
+
+    <!-- ===== Queue + Protocol ===== -->
+    <div class="board-tools">
+      <h2>Очередь и протокол контроля</h2>
+      <span class="tag-soft"><span class="dot" style="background:var(--blue)"></span>Анализатор: 1 канал занят</span>
+      <div class="bt-right">
+        <span class="hint"><svg class="ico xs"><use href="#i-route"/></svg>Выберите изделие — откроется протокол приёмки</span>
+        <span class="period"><svg class="ico sm"><use href="#i-cal"/></svg>09.06.2026</span>
+      </div>
+    </div>
+
+    <div class="otk-grid">
+      <!-- queue -->
+      <div class="qlist" id="qlist"></div>
+
+      <!-- protocol -->
+      <div class="detail" id="proto" style="margin:0">
+        <div class="detail-h">
+          <div>
+            <div class="dt">ПРОТОКОЛ ПРИЁМКИ · ОТК</div>
+            <div class="dh"><span id="p-no">—</span> · <em id="p-title">—</em></div>
+          </div>
+          <div class="acts">
+            <button class="btn"><svg class="ico sm"><use href="#i-cam"/></svg>Фото</button>
+            <button class="btn"><svg class="ico sm"><use href="#i-doc"/></svg>Паспорт PDF</button>
+          </div>
+        </div>
+
+        <!-- паспорт изделия (структура листа ОТК) -->
+        <div class="pass">
+          <div class="b"><div class="l">Ид. номер</div><div class="n" id="p-id">—</div></div>
+          <div class="b"><div class="l">К контролю</div><div class="n" id="p-qty">—</div></div>
+          <div class="b"><div class="l">Дата выпуска</div><div class="n" id="p-date">—</div></div>
+          <div class="b"><div class="l">Исполнитель</div><div class="n" id="p-asm">—</div></div>
+          <div class="b"><div class="l">Ном. напряжение</div><div class="n" id="p-u">—</div></div>
+          <div class="b"><div class="l">Ном. ёмкость</div><div class="n" id="p-c">—</div></div>
+          <div class="b"><div class="l">Сопротивление, норм.</div><div class="n" id="p-r">—</div></div>
+          <div class="b"><div class="l">Вес</div><div class="n" id="p-w">—</div></div>
+        </div>
+
+        <!-- чек-лист -->
+        <div id="ckwrap"></div>
+
+        <!-- решение -->
+        <div class="dec">
+          <div class="ready" id="dec-ready">—</div>
+          <div class="sp">
+            <button class="btn" id="btnEsc" disabled title="Доступно при несоответствии"><svg class="ico sm"><use href="#i-send"/></svg>Передать: закупщику · руководителю</button>
+            <select id="re-reason">
+              <option value="">Причина доработки…</option>
+              <option>Пайка БМС · непропай / перемычка</option>
+              <option>Сварной шов · прожог / отрыв</option>
+              <option>Не держит ёмкость · повторный прогон</option>
+              <option>Разброс ячеек · балансировка</option>
+              <option>Корпус / крышка · зазор, клей</option>
+              <option>Маркировка · этикетка / паспорт</option>
+              <option value="__custom">+ Своя причина…</option>
+            </select>
+            <input id="re-custom" placeholder="Своя причина доработки" hidden>
+            <button class="btn btn--warn" id="btnRe"><svg class="ico sm"><use href="#i-wrench"/></svg>На доработку</button>
+            <button class="btn btn--danger" id="btnScrap"><svg class="ico sm"><use href="#i-x"/></svg>Брак · акт</button>
+            <button class="btn btn--ok" id="btnOk" disabled><svg class="ico sm"><use href="#i-check"/></svg>Принять изделие</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Журнал решений ===== -->
+    <div class="detail" style="margin-top:16px;padding:14px 16px">
+      <div class="dc-h" style="margin-bottom:6px"><svg class="ico"><use href="#i-doc"/></svg>Журнал ОТК · сегодня<span class="tag" id="j-cnt">—</span></div>
+      <table class="jrn" style="width:100%;border-collapse:collapse"><tbody id="jbody"></tbody></table>
+    </div>
+
+    <!-- ===== Bottom summary ===== -->
+    <div class="summary">
+      <div class="sum-h"><h3>Итоги ОТК · июнь</h3><span class="period"><svg class="ico sm"><use href="#i-cal"/></svg>01–09.06.2026</span></div>
+      <div class="sum-grid">
+        <div class="sum-cell"><div class="l">Принято изделий</div><div class="n num" id="s-ok2">184</div><div class="d up"><svg class="ico xs"><use href="#i-trend"/></svg>+6% к периоду</div></div>
+        <div class="sum-cell"><div class="l">FPY</div><div class="n num">89%</div><div class="d dn"><svg class="ico xs"><use href="#i-trend"/></svg>−2% к периоду</div></div>
+        <div class="sum-cell"><div class="l">Доработок</div><div class="n num">7</div></div>
+        <div class="sum-cell"><div class="l">Брак</div><div class="n num">1,8%</div><div class="d up"><svg class="ico xs"><use href="#i-trend"/></svg>в норме ≤ 2%</div></div>
+        <div class="sum-cell"><div class="l">Актов списания</div><div class="n num" id="s-acts">2</div></div>
+        <div class="sum-cell"><div class="l">Ср. время контроля</div><div class="n num">14 <span style="font-size:14px;color:var(--ink-3)">мин</span></div></div>
+      </div>
+    </div>
+
+  </div><!-- /scroll -->
+</main>
+
+<!-- ===================== RIGHT RAIL ===================== -->
+<aside class="aside">
+  <div class="aside-h"><div class="t">ОТК · сегодня</div><span class="date-pill"><svg class="ico"><use href="#i-cal"/></svg>Вт, 09.06</span></div>
+
+  <div class="shiftbar">
+    <div class="sh-top"><span class="l">ПРИНЯТО ЗА СМЕНУ</span><span class="v"><span class="num" id="r-ok">12</span><span class="of"> / 18 изделий</span></span></div>
+    <div class="track"><i id="r-okbar" style="width:67%"></i></div>
+    <div class="sh-foot"><span>контролёры: Никита · Михаил</span><span id="r-okfoot">67% плана смены</span></div>
+  </div>
+
+  <div class="railscroll">
+    <div class="rail-cap">ТРЕБУЕТ РЕАКЦИИ<span class="cnt red">3</span></div>
+    <div class="rrow"><span class="ric amber"><svg class="ico"><use href="#i-clock"/></svg></span><div class="rtx"><div class="rt">Доработка №250 &gt; 24 ч</div><div class="rs">не держит ёмкость · повторный прогон</div></div></div>
+    <div class="rrow"><span class="ric indigo"><svg class="ico"><use href="#i-shield"/></svg></span><div class="rtx"><div class="rt">Партия №260 · AQL</div><div class="rs">выборка 8 из 26 · начать приёмку</div></div></div>
+    <div class="rrow"><span class="ric red"><svg class="ico"><use href="#i-doc"/></svg></span><div class="rtx"><div class="rt">Акт списания · 2 элемента</div><div class="rs">ждёт согласования начальника</div></div></div>
+
+    <div class="rail-cap">ЭСКАЛАЦИИ · ОТПРАВЛЕНО<span class="cnt blue" id="r-esc-cnt">1</span></div>
+    <div id="r-esc">
+      <div class="rrow"><span class="ric red"><svg class="ico"><use href="#i-send"/></svg></span><div class="rtx"><div class="rt">Претензия → закупщику · ПР-0603-01</div><div class="rs">BSL Battery · ёмкость ниже номинала</div></div></div>
+    </div>
+
+    <div class="rail-cap">ПРИЧИНЫ БРАКА · МЕСЯЦ</div>
+    <div class="par"><div class="pl2"><span>Пайка БМС</span><b>4</b></div><div class="pt2"><i style="width:100%"></i></div></div>
+    <div class="par"><div class="pl2"><span>Сварной шов</span><b>2</b></div><div class="pt2"><i style="width:50%"></i></div></div>
+    <div class="par"><div class="pl2"><span>Ёмкость ниже номинала</span><b>2</b></div><div class="pt2"><i style="width:50%"></i></div></div>
+    <div class="par"><div class="pl2"><span>Корпус · крышка</span><b>1</b></div><div class="pt2"><i style="width:25%"></i></div></div>
+
+    <div class="rail-cap">РЕГЛАМЕНТ СМЕНЫ</div>
+    <div class="rrow"><span class="ric green"><svg class="ico"><use href="#i-check"/></svg></span><div class="rtx"><div class="rt">Подготовка рабочего места</div><div class="rs">зарядные, оборудование, материалы</div></div></div>
+    <div class="rrow"><span class="ric cyan"><svg class="ico"><use href="#i-clock"/></svg></span><div class="rtx"><div class="rt">Конец дня: пауза проверки АКБ</div><div class="rs">паяльные/сварочные станции — выкл.</div></div></div>
+
+    <div class="divln"></div>
+
+    <!-- Deferred AI · Iteration 1 -->
+    <div class="ai-soon">
+      <div class="as-h"><span class="as-ic"><svg class="ico"><use href="#i-spark"/></svg></span><span class="as-t">Помощники ИИ</span><span class="as-badge">ИТЕРАЦИЯ 1</span></div>
+      <div class="as-li"><svg class="ico"><use href="#i-cam"/></svg>Фотоконтроль швов и пайки</div>
+      <div class="as-li"><svg class="ico"><use href="#i-trend"/></svg>Предикт брака по партии</div>
+      <div class="as-li"><svg class="ico"><use href="#i-doc"/></svg>Авто-протокол испытаний</div>
+      <div class="as-li"><svg class="ico"><use href="#i-gauge"/></svg>Аномалии измерений анализатора</div>
+      <div class="as-note">Появятся после запуска операционного контура. Прототип работает без ИИ — на ручных и реальных данных.</div>
+    </div>
+
+    <div class="rail-link"><a>Акты и протоколы испытаний <svg class="ico sm"><use href="#i-chev"/></svg></a></div>
+  </div>
+</aside>
+
+</div><!-- /app -->
+
+<!-- ===================== SCRAP CONFIRM MODAL ===================== -->
+<div class="modal" id="scrapModal" hidden>
+  <div class="modal-card">
+    <div class="mc-h mc-h--danger"><svg class="ico"><use href="#i-alert"/></svg>Оформить брак и акт списания?</div>
+    <div class="mc-b">
+      <div class="del-name" id="sc-name">—</div>
+      <div class="fld"><label>Причина брака</label><input id="sc-reason" placeholder="Напр. пайка БМС · непропай"><span class="hintx">попадёт в акт, претензию и статистику причин</span></div>
+      <div class="fld"><label>Источник несоответствия</label>
+        <select id="sc-src" class="fsel"><option value="comp">Комплектующее · вина поставщика</option><option value="asm">Сборка · внутренний брак</option></select></div>
+      <div class="fld" id="sc-comp-fld"><label>Комплектующее · поставщик</label><select id="sc-comp" class="fsel"></select></div>
+      <div class="chk"><input type="checkbox" id="sc-buyer" checked><label for="sc-buyer">Передать <b>закупщику</b> — претензия поставщику (паспорт, измерения, фото)</label></div>
+      <div class="chk"><input type="checkbox" id="sc-boss" checked disabled><label for="sc-boss">Уведомить <b>руководителя производства</b> — акт на согласование (обязательно)</label></div>
+    </div>
+    <div class="mc-foot">
+      <button class="btn" id="sc-cancel">Отмена</button>
+      <button class="btn btn--danger" id="sc-confirm"><svg class="ico sm"><use href="#i-x"/></svg>Оформить брак и отправить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== NC ESCALATION MODAL ===================== -->
+<div class="modal" id="escModal" hidden>
+  <div class="modal-card">
+    <div class="mc-h"><svg class="ico"><use href="#i-send"/></svg>Передать данные о несоответствии</div>
+    <div class="mc-b">
+      <div class="del-name" style="background:var(--amber-bg);border-color:#F4E1AE" id="esc-name">—</div>
+      <div class="fld"><label>Несоответствие</label><input id="esc-reason" placeholder="Что не так"><span class="hintx">подтянуто из чек-листа и измерений · можно уточнить</span></div>
+      <div class="fld"><label>Источник несоответствия</label>
+        <select id="esc-src" class="fsel"><option value="comp">Комплектующее · вина поставщика</option><option value="asm">Сборка · внутренний</option></select></div>
+      <div class="fld" id="esc-comp-fld"><label>Комплектующее · поставщик</label><select id="esc-comp" class="fsel"></select></div>
+      <div class="chk"><input type="checkbox" id="esc-buyer" checked><label for="esc-buyer">Передать <b>закупщику</b> — претензия поставщику</label></div>
+      <div class="chk"><input type="checkbox" id="esc-boss" checked><label for="esc-boss">Уведомить <b>руководителя производства</b></label></div>
+      <div class="hintx">К пакету приложатся: паспорт изделия, протокол измерений, фото, № партии комплектующего. Решение по единице (доработка / брак) принимается отдельно.</div>
+    </div>
+    <div class="mc-foot">
+      <button class="btn" id="esc-cancel">Отмена</button>
+      <button class="btn btn--pri" id="esc-confirm"><svg class="ico sm"><use href="#i-send"/></svg>Отправить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Items in queue (паспорт из листа ОТК) ===== */
+const ITEMS={
+ '250':{no:'№250', title:'Аккумулятор LiFePO4 RADIAN 12V 100Ah', mode:'re', modeT:'повторный прогон', qty:1, total:2, asm:'Артём',
+   id1c:'РАД-12100-0626-02', date:'05.06.2026', u:'12,8 В', c:'100 Ач', r:'≤ 25 мОм', w:'13,5 кг',
+   groups:[
+     {t:'Визуальный контроль', items:['Сварные соединения — без прожогов и отрывов','Пайка БМС — без перемычек, флюс отмыт','Термоусадка и изоляция — без повреждений','Крышка и метизы — затянуты, без зазора']},
+     {t:'Функциональная проверка', items:['Защита БМС — срабатывание при КЗ','Индикатор заряда — работает','Полярность и разъём — соответствие']}
+   ],
+   meas:[
+     {k:'u', t:'Напряжение покоя', tol:'13,0–13,6', min:13.0, max:13.6, un:'В'},
+     {k:'d', t:'Разброс ячеек', tol:'≤ 30', min:0, max:30, un:'мВ'},
+     {k:'r', t:'Внутреннее сопротивление', tol:'≤ 25', min:0, max:25, un:'мОм'},
+     {k:'cap', t:'Ёмкость · контрольный разряд (анализатор)', tol:'≥ 100', min:100, max:999, un:'Ач'}
+   ]},
+ '259':{no:'№259', title:'Аккумулятор EVE 10×INR18650 5000mAh 18V', mode:'full', modeT:'100% контроль', qty:3, total:7, asm:'Михаил',
+   id1c:'EVE-18-0626-114', date:'08.06.2026', u:'18,0 В', c:'5,0 Ач', r:'≤ 60 мОм', w:'0,9 кг',
+   groups:[
+     {t:'Визуальный контроль', items:['Точечная сварка — без прожогов','Никелевая лента — без надрывов','Термоусадка — плотная, без пустот','Маркировка 1С и этикетка — соответствие']},
+     {t:'Функциональная проверка', items:['Плата защиты — срабатывание','Разъём — фиксация, полярность']}
+   ],
+   meas:[
+     {k:'u', t:'Напряжение покоя', tol:'19,5–21,0', min:19.5, max:21.0, un:'В'},
+     {k:'d', t:'Разброс ячеек', tol:'≤ 40', min:0, max:40, un:'мВ'},
+     {k:'cap', t:'Ёмкость · контрольный разряд (анализатор)', tol:'≥ 5,0', min:5.0, max:99, un:'Ач'}
+   ]},
+ '260':{no:'№260', title:'Аккумулятор BSL 10×INR18650 18V для Bull', mode:'aql', modeT:'AQL · 8 из 26', qty:8, total:26, asm:'Руслан',
+   id1c:'BSL-18B-0626-033', date:'09.06.2026', u:'18,0 В', c:'2,0 Ач', r:'≤ 80 мОм', w:'0,8 кг',
+   groups:[
+     {t:'Визуальный контроль (по выборке)', items:['Точечная сварка — без прожогов','Термоусадка — без повреждений','Маркировка партии — соответствие 1С']},
+     {t:'Функциональная проверка', items:['Плата защиты — срабатывание','Разъём — полярность']}
+   ],
+   meas:[
+     {k:'u', t:'Напряжение покоя (среднее по выборке)', tol:'19,5–21,0', min:19.5, max:21.0, un:'В'},
+     {k:'cap', t:'Ёмкость образца (анализатор)', tol:'≥ 2,0', min:2.0, max:99, un:'Ач'}
+   ]},
+ '255':{no:'№255', title:'ER17505 FANSO с выводами 2PF · партия 300', mode:'aql', modeT:'AQL · 13 из 300', qty:13, total:300, asm:'Николай',
+   id1c:'FAN-175-0626-300', date:'09.06.2026', u:'3,6 В', c:'3,4 Ач', r:'—', w:'18 г',
+   groups:[
+     {t:'Визуальный контроль (по выборке)', items:['Приварка выводов 2PF — без подгаров','Изоляция вывода — без замыкания','Маркировка — дата и партия']}
+   ],
+   meas:[
+     {k:'u', t:'Напряжение разомкнутой цепи', tol:'≥ 3,6', min:3.6, max:3.95, un:'В'}
+   ]}
+};
+const ORDER=['250','259','260','255'];
+/* комплектующие с поставщиками — для претензий закупщику */
+ITEMS['250'].comps=[['Аккумулятор IFR27175200A 105Ah','Ganfeng Lithium'],['BMS 4S 100A','Daly Electronics'],['Корпус ABS + крышка','С.Д. Пластик'],['Индикатор 4S LiFePO','Shenzhen Lead']];
+ITEMS['259'].comps=[['Аккумулятор EVE INR18650-50E','EVE Energy'],['Плата защиты 5S','JBD'],['Никелевая лента 0,1×4мм','НикПром']];
+ITEMS['260'].comps=[['Аккумулятор BSL INR18650-2000','BSL Battery'],['Никелевая лента 4/6мм','НикПром']];
+ITEMS['255'].comps=[['Элемент FANSO ER17505','FANSO · Wuhan'],['Вывод 2PF','НикПром']];
+let CUR='250';
+let SHIFT_OK=12, SHIFT_PLAN=18, REWORK=2;
+
+/* state per item: st.checks[gi][ii] = ''|'ok'|'bad'; st.meas[k]=value */
+Object.values(ITEMS).forEach(it=>{ it.st={checks:it.groups.map(g=>g.items.map(()=>'') ), meas:{}}; });
+/* №250 — повторный: визуалка уже принята ранее */
+ITEMS['250'].st.checks[0]=['ok','ok','ok','ok'];
+ITEMS['250'].st.meas={u:'13,28', d:'18', r:'24,5'};
+
+const fmt=v=>String(v).replace('.', ',');
+const num=v=>parseFloat(String(v).replace(',','.'));
+
+/* ===== Queue ===== */
+function buildQueue(){
+  document.getElementById('qlist').innerHTML=ORDER.map(id=>{
+    const it=ITEMS[id];
+    return `<div class="qitem ${id===CUR?'sel':''}" data-id="${id}">
+      <div class="qt"><span class="po">${it.no}</span><span class="qmode ${it.mode}">${it.modeT}</span></div>
+      <div class="qn">${it.title}</div>
+      <div class="qb"><span>к контролю: <b>${it.qty}</b> из ${it.total}</span><span>сборщик: ${it.asm}</span></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.qitem').forEach(el=>el.addEventListener('click',()=>{CUR=el.dataset.id;buildQueue();renderProto();}));
+  // KPI очереди
+  const units=ORDER.reduce((s,id)=>s+ITEMS[id].qty,0);
+  document.getElementById('k-q').textContent=units;
+  document.getElementById('k-q-bar').style.width=Math.min(100,units*3)+'%';
+  document.getElementById('k-q-f').textContent=`${ORDER.length} позиции в очереди`;
+}
+
+/* ===== Protocol ===== */
+function renderProto(){
+  const it=ITEMS[CUR];
+  document.getElementById('p-no').textContent=it.no;
+  document.getElementById('p-title').textContent=it.title;
+  document.getElementById('p-id').textContent=it.id1c;
+  document.getElementById('p-qty').textContent=`${it.qty} из ${it.total}`;
+  document.getElementById('p-date').textContent=it.date;
+  document.getElementById('p-asm').textContent=it.asm;
+  document.getElementById('p-u').textContent=it.u;
+  document.getElementById('p-c').textContent=it.c;
+  document.getElementById('p-r').textContent=it.r;
+  document.getElementById('p-w').textContent=it.w;
+
+  const wrap=document.getElementById('ckwrap');
+  let html='';
+  it.groups.forEach((g,gi)=>{
+    html+=`<div class="ckg"><div class="ckg-h">${g.t}<span class="cnt2">${g.items.length} пунктов</span></div>`;
+    g.items.forEach((ci,ii)=>{
+      const st=it.st.checks[gi][ii];
+      html+=`<div class="ck ${st}" data-g="${gi}" data-i="${ii}">
+        <div class="ct">${ci}</div>
+        <div class="ckbtns">
+          <button class="ckb ${st==='ok'?'on-ok':''}" data-v="ok" title="Соответствует"><svg class="ico"><use href="#i-check"/></svg></button>
+          <button class="ckb ${st==='bad'?'on-bad':''}" data-v="bad" title="Несоответствие"><svg class="ico"><use href="#i-x"/></svg></button>
+        </div></div>`;
+    });
+    html+=`</div>`;
+  });
+  html+=`<div class="ckg"><div class="ckg-h">Электрические параметры · измерения<span class="cnt2">${it.meas.length} измер.</span></div>`;
+  it.meas.forEach(m=>{
+    const v=it.st.meas[m.k]??'';
+    html+=`<div class="ms" data-k="${m.k}">
+      <div class="mt">${m.t}<div class="tol">допуск: ${m.tol} ${m.un}</div></div>
+      <input type="number" step="0.01" value="${String(v).replace(',','.')}" data-k="${m.k}">
+      <span class="un">${m.un}</span><span class="mtag na">не измерено</span></div>`;
+  });
+  html+=`</div>`;
+  wrap.innerHTML=html;
+
+  // bind checks
+  wrap.querySelectorAll('.ck .ckb').forEach(b=>b.addEventListener('click',()=>{
+    const row=b.closest('.ck'); const gi=+row.dataset.g, ii=+row.dataset.i, v=b.dataset.v;
+    it.st.checks[gi][ii]=(it.st.checks[gi][ii]===v)?'':v;
+    renderProto();
+  }));
+  // bind measurements
+  wrap.querySelectorAll('.ms input').forEach(inp=>{
+    const apply=()=>{ it.st.meas[inp.dataset.k]=inp.value; validateMeas(it); refreshDecision(it); };
+    inp.addEventListener('input',apply);
+  });
+  validateMeas(it);
+  refreshDecision(it);
+}
+function validateMeas(it){
+  document.querySelectorAll('#ckwrap .ms').forEach(row=>{
+    const m=it.meas.find(x=>x.k===row.dataset.k);
+    const v=num(it.st.meas[m.k]);
+    const tag=row.querySelector('.mtag');
+    row.classList.remove('ok','bad');
+    if(isNaN(v)){ tag.className='mtag na'; tag.textContent='не измерено'; return; }
+    const good=v>=m.min&&v<=m.max;
+    tag.className='mtag '+(good?'ok':'bad');
+    tag.textContent=good?'в допуске':'вне допуска';
+    row.classList.add(good?'ok':'bad');
+  });
+}
+function readiness(it){
+  const flat=it.st.checks.flat();
+  const okC=flat.filter(v=>v==='ok').length, badC=flat.filter(v=>v==='bad').length;
+  const mVals=it.meas.map(m=>num(it.st.meas[m.k]));
+  const mDone=mVals.filter(v=>!isNaN(v)).length;
+  const mOk=it.meas.filter((m,i)=>!isNaN(mVals[i])&&mVals[i]>=m.min&&mVals[i]<=m.max).length;
+  const mBad=mDone-mOk;
+  return {okC,badC,total:flat.length,mDone,mOk,mBad,mTotal:it.meas.length,
+    hasNC: badC>0 || mBad>0,
+    canAccept: badC===0 && okC===flat.length && mOk===it.meas.length};
+}
+function refreshDecision(it){
+  const r=readiness(it);
+  document.getElementById('dec-ready').innerHTML=
+    `Чек-лист: <b>${r.okC}/${r.total}</b>${r.badC?` · <b style="color:var(--red)">${r.badC} несоотв.</b>`:''} · Измерения в допуске: <b>${r.mOk}/${r.mTotal}</b>${r.mBad?` · <b style="color:var(--red)">${r.mBad} вне</b>`:''}`;
+  document.getElementById('btnOk').disabled=!r.canAccept;
+  document.getElementById('btnEsc').disabled=!r.hasNC;
+}
+
+/* ===== Журнал ===== */
+const JRN=[
+ ['09:42','№268','Fanso ER14505 с разъёмом BLS-2 · 20 шт','ok','Принято','Никита'],
+ ['09:10','№272','5×EVE ICR18650 18V · 1 шт','ok','Принято','Никита'],
+ ['08:35','№250','RADIAN 12V 100Ah · 1 шт','re','Доработка · ёмкость','Михаил']
+];
+function buildJrn(){
+  document.getElementById('jbody').innerHTML=JRN.map(r=>
+    `<tr><td class="tm">${r[0]}</td><td><span class="nm2">${r[1]}</span> · ${r[2]}</td><td style="text-align:right"><span class="jres ${r[3]}">${r[4]}</span></td><td class="tm" style="text-align:right">${r[5]}</td></tr>`).join('');
+  document.getElementById('j-cnt').textContent=JRN.length+' записей';
+}
+function now(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function log(res, cls, label){
+  const it=ITEMS[CUR];
+  JRN.unshift([now(), it.no, it.title+' · 1 шт', cls, label, 'Никита']);
+  buildJrn();
+}
+
+/* ===== Decisions ===== */
+function consumeUnit(){
+  const it=ITEMS[CUR];
+  it.qty-=1;
+  if(it.qty<=0){ const i=ORDER.indexOf(CUR); ORDER.splice(i,1); CUR=ORDER[0]||null; }
+  buildQueue();
+  if(CUR) renderProto();
+}
+function bumpShift(){
+  SHIFT_OK++;
+  document.getElementById('r-ok').textContent=SHIFT_OK;
+  const p=Math.round(SHIFT_OK/SHIFT_PLAN*100);
+  document.getElementById('r-okbar').style.width=Math.min(100,p)+'%';
+  document.getElementById('r-okfoot').textContent=p+'% плана смены';
+}
+document.getElementById('btnOk').addEventListener('click',()=>{
+  const it=ITEMS[CUR];
+  log('ok','ok','Принято');
+  bumpShift();
+  // сброс протокола под следующую единицу
+  it.st={checks:it.groups.map(g=>g.items.map(()=>'')), meas:{}};
+  consumeUnit();
+});
+document.getElementById('re-reason').addEventListener('change',()=>{
+  const sel=document.getElementById('re-reason'), inp=document.getElementById('re-custom');
+  inp.hidden=sel.value!=='__custom';
+  if(!inp.hidden) inp.focus();
+});
+document.getElementById('btnRe').addEventListener('click',()=>{
+  const sel=document.getElementById('re-reason'), inp=document.getElementById('re-custom');
+  let reason=sel.value;
+  if(reason==='__custom'){
+    reason=inp.value.trim();
+    if(!reason){ inp.focus(); inp.style.borderColor='var(--amber)'; setTimeout(()=>inp.style.borderColor='',900); return; }
+    // своя причина остаётся в списке — в следующий раз доступна из выпадающего
+    if(![...sel.options].some(o=>o.value!=='__custom'&&o.text===reason))
+      sel.add(new Option(reason), sel.querySelector('option[value="__custom"]'));
+    inp.value=''; inp.hidden=true;
+  }
+  if(!reason){ sel.focus(); sel.style.borderColor='var(--amber)'; setTimeout(()=>sel.style.borderColor='',900); return; }
+  log('re','re','Доработка · '+reason.split(' ·')[0]);
+  REWORK++; document.getElementById('k-re').textContent=REWORK;
+  document.getElementById('k-re-bar').style.width=Math.min(100,REWORK*10)+'%';
+  const it=ITEMS[CUR];
+  it.st={checks:it.groups.map(g=>g.items.map(()=>'')), meas:{}};
+  sel.value='';
+  consumeUnit();
+});
+/* ===== Эскалации: закупщику · руководителю ===== */
+let CLAIM_N=1, ACT_N=2, ESC_CNT=1;
+const pad2=n=>String(n).padStart(2,'0');
+function fillComp(selId, it){
+  document.getElementById(selId).innerHTML=(it.comps||[]).map((c,i)=>`<option value="${i}">${c[0]} — ${c[1]}</option>`).join('');
+}
+function srcToggle(srcId, compFld, buyerId){
+  const isComp=document.getElementById(srcId).value==='comp';
+  document.getElementById(compFld).style.display=isComp?'':'none';
+  const buyer=document.getElementById(buyerId);
+  buyer.disabled=!isComp; if(!isComp) buyer.checked=false; else buyer.checked=true;
+}
+function railEsc(kind, title, sub){
+  ESC_CNT++; document.getElementById('r-esc-cnt').textContent=ESC_CNT;
+  const ic=kind==='buyer'?'red':'indigo';
+  const ico=kind==='buyer'?'i-send':'i-team';
+  document.getElementById('r-esc').insertAdjacentHTML('afterbegin',
+    `<div class="rrow"><span class="ric ${ic}"><svg class="ico"><use href="#${ico}"/></svg></span><div class="rtx"><div class="rt">${title}</div><div class="rs">${sub}</div></div></div>`);
+}
+function ncDefault(it){
+  for(let g=0; g<it.st.checks.length; g++){
+    const i=it.st.checks[g].indexOf('bad');
+    if(i>-1) return it.groups[g].items[i];
+  }
+  for(const m of it.meas){
+    const v=num(it.st.meas[m.k]);
+    if(!isNaN(v)&&(v<m.min||v>m.max)) return `${m.t}: ${fmt(it.st.meas[m.k])} ${m.un} (допуск ${m.tol})`;
+  }
+  return it.mode==='re'?'не держит ёмкость · повторный прогон':'';
+}
+function sendPack(it, reason, srcId, compId, buyerId, bossId, prefix){
+  const isComp=document.getElementById(srcId).value==='comp';
+  const buyer=document.getElementById(buyerId).checked && isComp;
+  const boss=document.getElementById(bossId).checked;
+  const comp=isComp?(it.comps[+document.getElementById(compId).value]||it.comps[0]):null;
+  const sent=[];
+  if(buyer){
+    CLAIM_N++; const id=`ПР-0610-${pad2(CLAIM_N)}`;
+    railEsc('buyer', `Претензия → закупщику · ${id}`, `${comp[1]} · ${comp[0]} · ${reason}`);
+    sent.push('закупщику');
+  }
+  if(boss){
+    railEsc('boss', `${prefix} → руководителю`, `${it.no} · ${reason}`);
+    sent.push('руководителю');
+  }
+  return sent;
+}
+
+const escM=document.getElementById('escModal');
+document.getElementById('btnEsc').addEventListener('click',()=>{
+  const it=ITEMS[CUR];
+  document.getElementById('esc-name').textContent=it.no+' · '+it.title;
+  document.getElementById('esc-reason').value=ncDefault(it);
+  fillComp('esc-comp', it);
+  document.getElementById('esc-src').value='comp';
+  document.getElementById('esc-boss').checked=true;
+  srcToggle('esc-src','esc-comp-fld','esc-buyer');
+  escM.hidden=false;
+});
+document.getElementById('esc-src').addEventListener('change',()=>srcToggle('esc-src','esc-comp-fld','esc-buyer'));
+document.getElementById('esc-cancel').addEventListener('click',()=>escM.hidden=true);
+escM.addEventListener('click',e=>{ if(e.target===escM) escM.hidden=true; });
+document.getElementById('esc-confirm').addEventListener('click',()=>{
+  const it=ITEMS[CUR];
+  const reason=document.getElementById('esc-reason').value.trim()||'несоответствие';
+  const sent=sendPack(it, reason, 'esc-src','esc-comp','esc-buyer','esc-boss','Несоответствие');
+  if(sent.length) log('re','re','НС передано · '+sent.join(' + '));
+  escM.hidden=true;
+});
+
+/* брак — модал */
+const scrap=document.getElementById('scrapModal');
+document.getElementById('btnScrap').addEventListener('click',()=>{
+  const it=ITEMS[CUR];
+  document.getElementById('sc-name').textContent=it.no+' · '+it.title;
+  document.getElementById('sc-reason').value=ncDefault(it);
+  fillComp('sc-comp', it);
+  document.getElementById('sc-src').value='comp';
+  srcToggle('sc-src','sc-comp-fld','sc-buyer');
+  scrap.hidden=false; document.getElementById('sc-reason').focus();
+});
+document.getElementById('sc-src').addEventListener('change',()=>srcToggle('sc-src','sc-comp-fld','sc-buyer'));
+document.getElementById('sc-cancel').addEventListener('click',()=>scrap.hidden=true);
+scrap.addEventListener('click',e=>{ if(e.target===scrap) scrap.hidden=true; });
+document.getElementById('sc-confirm').addEventListener('click',()=>{
+  const it=ITEMS[CUR];
+  const reason=document.getElementById('sc-reason').value.trim()||'не указана';
+  ACT_N++; const act=`АКТ-0610-${pad2(ACT_N)}`;
+  document.getElementById('s-acts').textContent=ACT_N;
+  const sent=sendPack(it, reason, 'sc-src','sc-comp','sc-buyer','sc-boss',`Брак · ${act}`);
+  log('scrap','scrap','Брак · '+reason+(sent.includes('закупщику')?' · претензия':''));
+  scrap.hidden=true;
+  it.st={checks:it.groups.map(g=>g.items.map(()=>'')), meas:{}};
+  consumeUnit();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(!scrap.hidden) scrap.hidden=true; if(!escM.hidden) escM.hidden=true; } });
+
+/* ===== Init ===== */
+buildQueue(); renderProto(); buildJrn();
+</script>
+</body></html>
