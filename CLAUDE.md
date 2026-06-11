@@ -26,8 +26,11 @@
 - Подписок / workflow / permissions / roles / telegram — нет.
 
 ## События
-- **Публикует:** `production.completed` — при `PATCH /orders/{id}` с переходом в этап `done`.
-  Payload: `{item, qty, warehouse: "Главный", entity_ref: "production:<id>"}` (приход на склад).
+- **Публикует:**
+  - `production.completed` — при `PATCH /orders/{id}` с переходом в этап `done`.
+    Payload: `{item, qty, warehouse: "Главный", entity_ref: "production:<id>"}` (приход на склад).
+  - `production.scrap` — при `POST /qc/decisions` с `decision=scrap` (брак).
+    Payload: `{item, reason, order_code, entity_ref: "production:qc:<id>"}` (претензия в закупки).
 - **Подписан на:** ничего.
 
 ## Модель данных (таблицы схемы)
@@ -45,6 +48,12 @@
   - `status` (str: `none` нет нормы → `pending` на утверждении → `approved` утверждена)
   - `note` (str), `updated_at` (datetime, onupdate now)
   - Правка `nh` возвращает статус в `pending`; утвердить норму с nh=0 нельзя (409).
+- `production.production_worker` (`ProductionWorker`) — табель (экран «Выработка и оценка»):
+  - `id` (PK), `name` (str), `salary` (float, оклад BYN/мес), `days_worked` (int), `nh_output` (float, выработка н.ч)
+  - ЗП = `salary × days_worked / 22 + nh_output × 6.25` (премиальная ставка); вклад = `nh_output × 25` (ставка работы).
+- `production.production_qc` (`ProductionQc`) — журнал ОТК (экран «ОТК · контроль качества»):
+  - `id` (PK), `order_code` (str), `product` (str), `decision` (str: `accept`|`rework`|`scrap`), `reason` (str), `inspector` (str), `created_at`
+  - Брак (`scrap`) публикует событие `production.scrap` → претензия в закупки.
 
 ## API-эндпоинты (ключевые)
 - `GET /production/orders` — плоский список нарядов (для аналитики/совместимости), сортировка по `id desc`
@@ -53,12 +62,14 @@
 - `PATCH /production/orders/{order_id}` — сменить этап; при `done` → `progress=100`, `made_qty=qty`, emit `production.completed`
 - `GET /production/norms?kind=` / `POST /production/norms` — справочник норм (создание: nh>0 → `pending`, nh=0 → `none`)
 - `PATCH /production/norms/{id}` — правка (смена nh → `pending`); `POST /production/norms/{id}/approve` — утвердить (409 при nh=0); `DELETE /production/norms/{id}` — 204
+- `GET/POST /production/workers`, `PATCH /production/workers/{id}` — табель сборщиков; `GET /production/payroll` — расчёт ЗП по строкам (base/premium/total) + рейтинг вклада + итоги цеха
+- `POST /production/qc/decisions` — решение ОТК (`accept`|`rework`|`scrap`; 422 на иное); `scrap` emit `production.scrap`. `GET /production/qc/decisions` — журнал; `GET /production/qc/stats` — accepted/rework/scrap + pass-rate
 
 ## Межмодульные связи и зависимости
 - Из ядра: `core.runtime.{contract,core,deps,funnel}`, `core.db.base.Base`.
 - Использует общий конструктор воронки `core.runtime.funnel` (`FunnelCard`, `build_board`, `FunnelBoardOut`).
-- Исходящая интеграция: событие `production.completed` → WMS (приход на склад). Прямых вызовов
-  других модулей нет — только через `core.event_bus`.
+- Исходящая интеграция: `production.completed` → WMS (приход на склад), `production.scrap` →
+  закупки (претензия поставщику). Прямых вызовов других модулей нет — только через `core.event_bus`.
 
 ## Подводные камни / детали
 - Роуты модуля **коммитят сами** (`session.commit()`), в отличие от паттерна «роут владеет
