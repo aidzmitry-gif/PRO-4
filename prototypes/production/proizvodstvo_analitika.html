@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<!-- ERP · Производство · ОТК — приёмка, чек-лист, анализатор, акты -->
+<!-- ERP · Производство · Аналитика — дашборд производства: KPI, графики SVG, топ изделий -->
 <html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ERP · Производство · ОТК · контроль качества</title>
+<title>ERP · Производство · Аналитика</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
@@ -564,6 +564,66 @@ svg{display:block}
 .chk input{width:16px;height:16px;accent-color:var(--pri);margin-top:1px;flex:none}
 .chk input:disabled{accent-color:var(--ink-4)}
 .chk b{color:var(--ink)}
+
+/* ===== Supplement · Аналитика (дашборд) ===== */
+.seg--txt button{font:inherit;font-weight:800;font-size:12.5px;color:var(--ink-3);padding:6px 14px}
+.seg--txt button.active{color:var(--pri)}
+.chgrid2{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin:14px 0 0}
+.chgrid22{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 0}
+.chgrid2 .detail,.chgrid22 .detail{margin:0}
+.ch-h{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.ch-h .t{font-size:13.5px;font-weight:800}
+.ch-h .s{font-size:11.5px;color:var(--ink-3);font-weight:700;margin-left:auto;white-space:nowrap}
+svg.chart{width:100%;height:auto;font-family:inherit;display:block}
+.chart text{font-family:inherit}
+.axl{fill:var(--ink-3);font-size:10.5px;font-weight:700}
+.axv{fill:var(--ink-2);font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+.dbar{fill:#6366F1;cursor:pointer;transition:.12s}
+.dbar:hover{fill:#4F52E8}
+.dbar.lo{fill:#E8920C}.dbar.lo:hover{fill:#D07F06}
+.dbar.zero{fill:#E2E8F0}
+.dbar.sel{stroke:#1E54E6;stroke-width:2.5}
+.dhit{fill:transparent;cursor:pointer}
+.norml{stroke:#C3CCDA;stroke-width:2;stroke-dasharray:6 5}
+.norml-lab{fill:var(--ink-3);font-size:10px;font-weight:800}
+.bp{fill:#DCE4F0}
+.bf{fill:#6366F1}
+.bf.zero{fill:#EDF1F7}
+.mpair{opacity:.45;transition:.15s}
+.mpair.cur{opacity:1}
+.mfv{fill:var(--ink-2);font-size:9.5px;font-weight:800;text-anchor:middle;font-variant-numeric:tabular-nums}
+.capline{stroke:#E5484D;stroke-width:1.5;stroke-dasharray:5 5;opacity:.55}
+.cap-lab{fill:var(--red);font-size:10px;font-weight:800}
+.pline{fill:none;stroke:#16A34A;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.pp{fill:#fff;stroke:#16A34A;stroke-width:2.5}
+.pv{fill:var(--ink);font-size:11px;font-weight:800;text-anchor:middle;font-variant-numeric:tabular-nums}
+.brl{fill:var(--ink-2);font-size:11.5px;font-weight:700}
+.brbar{fill:#E5484D;opacity:.85}
+.brv{fill:var(--ink);font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.tnm{fill:var(--ink);font-size:11.5px;font-weight:700}
+.tv{fill:var(--ink);font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.ttab{width:100%;border-collapse:collapse;font-size:12.5px}
+.ttab th{text-align:left;font-size:10px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.4px;padding:0 10px 10px;border-bottom:1px solid var(--line)}
+.ttab th.r,.ttab td.r{text-align:right}
+.ttab td{padding:10px;border-bottom:1px solid var(--line-2);font-weight:700;font-variant-numeric:tabular-nums}
+.ttab tbody tr:last-child td{border-bottom:0}
+.ttab tfoot td{padding:10px;border-top:2px solid var(--line);font-weight:800}
+.shr{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end}
+.shr .b2{width:56px;height:6px;border-radius:99px;background:var(--line-2);overflow:hidden;display:inline-block}
+.shr .b2 i{display:block;height:100%;background:linear-gradient(90deg,#6366F1,#A78BFA);border-radius:99px}
+.daycard{margin:0 4px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+.daycard .dch{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.daycard .dcd{font-size:13px;font-weight:800}
+.dc-badge{margin-left:auto;font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;white-space:nowrap}
+.dc-badge.ok{background:var(--green-bg);color:var(--green)}
+.dc-badge.bad{background:var(--amber-bg);color:var(--amber)}
+.dc-badge.na{background:#EEF2F7;color:var(--ink-3)}
+.daycard .dcv{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:2px;font-variant-numeric:tabular-nums}
+.daycard .dcn{font-size:11px;font-weight:700;color:var(--ink-3);margin-bottom:9px}
+.dci{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;color:var(--ink-2);padding:6px 0;border-top:1px solid var(--line-2);line-height:1.35}
+.dci b{font-weight:800;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.dc-empty{font-size:11.5px;font-weight:600;color:var(--ink-3);padding:8px 0;border-top:1px solid var(--line-2)}
+.dc-cnt{font-size:10.5px;font-weight:800;color:var(--ink-4);margin-top:7px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -632,8 +692,8 @@ svg{display:block}
     <a href="proizvodstvo_planirovanie.html">Планирование · план/факт</a>
     <a href="proizvodstvo_normy.html">Нормы и нормативы</a>
     <a href="proizvodstvo_vyrabotka.html">Выработка и оценка</a>
-    <a class="active" href="proizvodstvo_otk.html">ОТК · контроль качества</a>
-    <a href="proizvodstvo_analitika.html">Аналитика</a>
+    <a href="proizvodstvo_otk.html">ОТК · контроль качества</a>
+    <a class="active" href="proizvodstvo_analitika.html">Аналитика</a>
   </div>
   <a><svg class="ico"><use href="#i-box"/></svg>Склад</a>
   <a><svg class="ico"><use href="#i-truck"/></svg>Логистика</a>
@@ -653,595 +713,406 @@ svg{display:block}
 
 <!-- ===================== MAIN ===================== -->
 <main class="main">
-  <header class="topbar">
-    <div class="crumb"><span class="m">Производство</span><span class="sep">/</span><span>ОТК · контроль качества</span></div>
-    <div class="search"><svg class="ico sm"><use href="#i-search"/></svg><input placeholder="Поиск: №, изделие…"></div>
-    <div class="tb-right">
-      <button class="btn"><svg class="ico sm"><use href="#i-doc"/></svg>Журнал</button>
-      <button class="btn"><svg class="ico sm"><use href="#i-cal"/></svg>Смена № 1</button>
-      <button class="btn btn--pri"><svg class="ico sm"><use href="#i-shield"/></svg>Принять партию</button>
+<header class="topbar">
+  <div class="crumb"><span class="m">Производство</span><span class="sep">/</span><span>Аналитика</span></div>
+  <div class="search"><svg class="ico sm"><use href="#i-search"/></svg><input placeholder="Поиск по изделию, заявке, сборщику…"></div>
+  <div class="tb-right">
+    <button class="btn"><svg class="ico sm"><use href="#i-doc"/></svg>Экспорт</button>
+    <button class="btn"><svg class="ico sm"><use href="#i-cal"/></svg>09.06.2026</button>
+    <button class="icon-btn"><svg class="ico"><use href="#i-bell"/></svg><span class="dotn">3</span></button>
+    <button class="btn btn--pri"><svg class="ico sm"><use href="#i-bar"/></svg>Сводный отчёт</button>
+  </div>
+</header>
+
+<div class="scroll">
+  <div class="section-h"><h2>Аналитика производства</h2><span class="mut" id="p-sub">—</span></div>
+
+  <!-- KPI -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-h"><span class="kpi-ic ic-indigo"><svg class="ico"><use href="#i-bolt"/></svg></span><span class="t">Выработка · план периода</span></div>
+      <div class="kpi-val"><span class="num" id="k-vyr">—</span><span class="of" id="k-vyr-of">/ — н.ч</span></div>
+      <div class="bar"><i class="f-indigo" id="k-vyr-bar"></i></div>
+      <div class="kpi-foot warn" id="k-vyr-f">—</div>
     </div>
-  </header>
-
-  <div class="scroll">
-
-    <div class="section-h"><h2>ОТК · приёмка изделий</h2><span class="mut">вторник, 09.06.2026 · контролёр: Никита · прогон через анализатор АКБ</span></div>
-
-    <!-- ===== KPI strip ===== -->
-    <div class="kpis">
-      <div class="kpi">
-        <div class="kpi-h"><span class="kpi-ic ic-blue"><svg class="ico"><use href="#i-shield"/></svg></span><span class="t">Очередь на ОТК</span></div>
-        <div class="kpi-val"><span class="num" id="k-q">—</span><span class="cur">шт</span></div>
-        <div class="bar"><i class="f-blue" id="k-q-bar"></i></div>
-        <div class="kpi-foot" id="k-q-f">— позиции</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-h"><span class="kpi-ic ic-green"><svg class="ico"><use href="#i-check"/></svg></span><span class="t">FPY · с первого раза</span></div>
-        <div class="kpi-val"><span class="num">89</span><span class="cur">%</span></div>
-        <div class="bar"><i class="f-green" style="width:89%"></i></div>
-        <div class="kpi-foot">first pass yield · месяц</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-h"><span class="kpi-ic ic-cyan"><svg class="ico"><use href="#i-gauge"/></svg></span><span class="t">Pass-rate с доработкой</span></div>
-        <div class="kpi-val"><span class="num">96</span><span class="cur">%</span></div>
-        <div class="bar"><i class="f-cyan" style="width:96%"></i></div>
-        <div class="kpi-foot ok">цель ≥ 95%</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-h"><span class="kpi-ic ic-amber"><svg class="ico"><use href="#i-wrench"/></svg></span><span class="t">На доработке</span></div>
-        <div class="kpi-val"><span class="num" id="k-re">2</span><span class="cur">шт</span></div>
-        <div class="bar"><i class="f-amber" id="k-re-bar" style="width:20%"></i></div>
-        <div class="kpi-foot warn">1 изделие &gt; 24 ч</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-h"><span class="kpi-ic ic-red"><svg class="ico"><use href="#i-alert"/></svg></span><span class="t">Брак · месяц</span></div>
-        <div class="kpi-val"><span class="num">1,8</span><span class="cur">%</span></div>
-        <div class="bar"><i class="f-red" style="width:18%"></i></div>
-        <div class="kpi-foot">9 шт · 2 акта списания</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-h"><span class="kpi-ic ic-indigo"><svg class="ico"><use href="#i-clock"/></svg></span><span class="t">Среднее время контроля</span></div>
-        <div class="kpi-val"><span class="num">14</span><span class="cur">мин</span></div>
-        <div class="bar"><i class="f-indigo" style="width:56%"></i></div>
-        <div class="kpi-foot">на изделие · вкл. прогон</div>
-      </div>
+    <div class="kpi">
+      <div class="kpi-h"><span class="kpi-ic ic-amber"><svg class="ico"><use href="#i-gauge"/></svg></span><span class="t">Эффективность труда</span></div>
+      <div class="kpi-val"><span class="num" id="k-eff">—</span><span class="cur">%</span></div>
+      <div class="bar"><i class="f-amber" id="k-eff-bar"></i></div>
+      <div class="kpi-foot warn">выработка ÷ табель (8 ч)</div>
     </div>
+    <div class="kpi">
+      <div class="kpi-h"><span class="kpi-ic ic-cyan"><svg class="ico"><use href="#i-shield"/></svg></span><span class="t">FPY · с первого предъявления</span></div>
+      <div class="kpi-val"><span class="num" id="k-fpy">—</span><span class="cur">%</span></div>
+      <div class="bar"><i class="f-cyan" id="k-fpy-bar"></i></div>
+      <div class="kpi-foot">годен без доработок</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-h"><span class="kpi-ic ic-green"><svg class="ico"><use href="#i-check"/></svg></span><span class="t">Pass-rate ОТК</span></div>
+      <div class="kpi-val"><span class="num" id="k-pass">—</span><span class="cur">%</span></div>
+      <div class="bar"><i class="f-green" id="k-pass-bar"></i></div>
+      <div class="kpi-foot ok" id="k-pass-f">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-h"><span class="kpi-ic ic-red"><svg class="ico"><use href="#i-alert"/></svg></span><span class="t">Брак</span></div>
+      <div class="kpi-val"><span class="num" id="k-brak">—</span><span class="cur">%</span></div>
+      <div class="bar"><i class="f-red" id="k-brak-bar"></i></div>
+      <div class="kpi-foot ok" id="k-brak-f">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-h"><span class="kpi-ic ic-teal"><svg class="ico"><use href="#i-coins"/></svg></span><span class="t">ФОТ-премия от выработки</span></div>
+      <div class="kpi-val"><span class="num" id="k-prem">—</span><span class="cur">BYN</span></div>
+      <div class="bar"><i class="f-teal" style="width:100%"></i></div>
+      <div class="kpi-foot" id="k-prem-f">—</div>
+    </div>
+  </div>
 
-    <!-- ===== Operational attention bar (без ИИ) ===== -->
-    <div class="op-bar">
-      <span class="ob-ic"><svg class="ico"><use href="#i-alert"/></svg></span>
-      <div class="txt">№250 RADIAN 12V: 1 изделие на повторном прогоне <b>больше 24 часов</b> — не держит ёмкость. Партия №260 (26 шт) ждёт выборочную приёмку <b>AQL · 8 образцов</b>.</div>
-      <div class="acts">
-        <button class="pill-w">Открыть №250</button>
-        <button class="pill-w solid">Начать приёмку №260</button>
+  <!-- Period switcher -->
+  <div class="board-tools">
+    <h2>Дашборд производства</h2>
+    <span class="tag-soft"><span class="dot" style="background:var(--indigo)"></span>нормо-часы · BYN</span>
+    <div class="bt-right">
+      <span class="hint"><svg class="ico xs"><use href="#i-route"/></svg>Клик по столбику дня — детализация справа</span>
+      <div class="seg seg--txt" id="seg-period">
+        <button class="active" data-p="m">Месяц</button>
+        <button data-p="q">Квартал</button>
+        <button data-p="y">Год</button>
       </div>
+      <span class="period" id="period-pill"><svg class="ico sm"><use href="#i-cal"/></svg><span id="pp-lab">—</span></span>
     </div>
+  </div>
 
-    <!-- ===== Queue + Protocol ===== -->
-    <div class="board-tools">
-      <h2>Очередь и протокол контроля</h2>
-      <span class="tag-soft"><span class="dot" style="background:var(--blue)"></span>Анализатор: 1 канал занят</span>
-      <div class="bt-right">
-        <span class="hint"><svg class="ico xs"><use href="#i-route"/></svg>Выберите изделие — откроется протокол приёмки</span>
-        <span class="period"><svg class="ico sm"><use href="#i-cal"/></svg>09.06.2026</span>
-      </div>
+  <!-- Chart 1: выработка по дням июня -->
+  <div class="detail" style="margin:0">
+    <div class="ch-h"><span class="t">Выработка по дням · Июнь 2026 (01–09)</span><span class="s" id="days-sum">—</span></div>
+    <svg class="chart" id="ch-days" viewBox="0 0 720 196"></svg>
+  </div>
+
+  <!-- Chart 2 + 3 -->
+  <div class="chgrid2">
+    <div class="detail">
+      <div class="ch-h"><span class="t">План / факт по месяцам · 2026</span><span class="s">мощность цеха 704 н.ч/мес</span></div>
+      <svg class="chart" id="ch-months" viewBox="0 0 720 176"></svg>
     </div>
-
-    <div class="otk-grid">
-      <!-- queue -->
-      <div class="qlist" id="qlist"></div>
-
-      <!-- protocol -->
-      <div class="detail" id="proto" style="margin:0">
-        <div class="detail-h">
-          <div>
-            <div class="dt">ПРОТОКОЛ ПРИЁМКИ · ОТК</div>
-            <div class="dh"><span id="p-no">—</span> · <em id="p-title">—</em></div>
-          </div>
-          <div class="acts">
-            <button class="btn"><svg class="ico sm"><use href="#i-cam"/></svg>Фото</button>
-            <button class="btn"><svg class="ico sm"><use href="#i-doc"/></svg>Паспорт PDF</button>
-          </div>
-        </div>
-
-        <!-- паспорт изделия (структура листа ОТК) -->
-        <div class="pass">
-          <div class="b"><div class="l">Ид. номер</div><div class="n" id="p-id">—</div></div>
-          <div class="b"><div class="l">К контролю</div><div class="n" id="p-qty">—</div></div>
-          <div class="b"><div class="l">Дата выпуска</div><div class="n" id="p-date">—</div></div>
-          <div class="b"><div class="l">Исполнитель</div><div class="n" id="p-asm">—</div></div>
-          <div class="b"><div class="l">Ном. напряжение</div><div class="n" id="p-u">—</div></div>
-          <div class="b"><div class="l">Ном. ёмкость</div><div class="n" id="p-c">—</div></div>
-          <div class="b"><div class="l">Сопротивление, норм.</div><div class="n" id="p-r">—</div></div>
-          <div class="b"><div class="l">Вес</div><div class="n" id="p-w">—</div></div>
-        </div>
-
-        <!-- чек-лист -->
-        <div id="ckwrap"></div>
-
-        <!-- решение -->
-        <div class="dec">
-          <div class="ready" id="dec-ready">—</div>
-          <div class="sp">
-            <button class="btn" id="btnEsc" disabled title="Доступно при несоответствии"><svg class="ico sm"><use href="#i-send"/></svg>Передать: закупщику · руководителю</button>
-            <select id="re-reason">
-              <option value="">Причина доработки…</option>
-              <option>Пайка БМС · непропай / перемычка</option>
-              <option>Сварной шов · прожог / отрыв</option>
-              <option>Не держит ёмкость · повторный прогон</option>
-              <option>Разброс ячеек · балансировка</option>
-              <option>Корпус / крышка · зазор, клей</option>
-              <option>Маркировка · этикетка / паспорт</option>
-              <option value="__custom">+ Своя причина…</option>
-            </select>
-            <input id="re-custom" placeholder="Своя причина доработки" hidden>
-            <button class="btn btn--warn" id="btnRe"><svg class="ico sm"><use href="#i-wrench"/></svg>На доработку</button>
-            <button class="btn btn--danger" id="btnScrap"><svg class="ico sm"><use href="#i-x"/></svg>Брак · акт</button>
-            <button class="btn btn--ok" id="btnOk" disabled><svg class="ico sm"><use href="#i-check"/></svg>Принять изделие</button>
-          </div>
-        </div>
-      </div>
+    <div class="detail">
+      <div class="ch-h"><span class="t">Тренд pass-rate ОТК</span><span class="s" id="pass-cap">—</span></div>
+      <svg class="chart" id="ch-pass" viewBox="0 0 460 176"></svg>
     </div>
+  </div>
 
-    <!-- ===== Журнал решений ===== -->
-    <div class="detail" style="margin-top:16px;padding:14px 16px">
-      <div class="dc-h" style="margin-bottom:6px"><svg class="ico"><use href="#i-doc"/></svg>Журнал ОТК · сегодня<span class="tag" id="j-cnt">—</span></div>
-      <table class="jrn" style="width:100%;border-collapse:collapse"><tbody id="jbody"></tbody></table>
+  <!-- Chart 4 + 5 -->
+  <div class="chgrid22">
+    <div class="detail">
+      <div class="ch-h"><span class="t">Причины брака</span><span class="s" id="brak-cap">—</span></div>
+      <svg class="chart" id="ch-brak" viewBox="0 0 460 148"></svg>
     </div>
-
-    <!-- ===== Bottom summary ===== -->
-    <div class="summary">
-      <div class="sum-h"><h3>Итоги ОТК · июнь</h3><span class="period"><svg class="ico sm"><use href="#i-cal"/></svg>01–09.06.2026</span></div>
-      <div class="sum-grid">
-        <div class="sum-cell"><div class="l">Принято изделий</div><div class="n num" id="s-ok2">184</div><div class="d up"><svg class="ico xs"><use href="#i-trend"/></svg>+6% к периоду</div></div>
-        <div class="sum-cell"><div class="l">FPY</div><div class="n num">89%</div><div class="d dn"><svg class="ico xs"><use href="#i-trend"/></svg>−2% к периоду</div></div>
-        <div class="sum-cell"><div class="l">Доработок</div><div class="n num">7</div></div>
-        <div class="sum-cell"><div class="l">Брак</div><div class="n num">1,8%</div><div class="d up"><svg class="ico xs"><use href="#i-trend"/></svg>в норме ≤ 2%</div></div>
-        <div class="sum-cell"><div class="l">Актов списания</div><div class="n num" id="s-acts">2</div></div>
-        <div class="sum-cell"><div class="l">Ср. время контроля</div><div class="n num">14 <span style="font-size:14px;color:var(--ink-3)">мин</span></div></div>
-      </div>
+    <div class="detail">
+      <div class="ch-h"><span class="t">Вклад сборщиков в выработку</span><span class="s" id="team-cap">—</span></div>
+      <svg class="chart" id="ch-team" viewBox="0 0 460 152"></svg>
     </div>
+  </div>
 
-  </div><!-- /scroll -->
+  <!-- Top items table -->
+  <div class="detail" style="margin:14px 0 22px">
+    <div class="ch-h"><span class="t">Топ изделий по выработке за период</span><span class="s" id="top-period">—</span></div>
+    <table class="ttab">
+      <thead><tr><th>Изделие</th><th class="r">Шт</th><th class="r">Н.ч</th><th class="r">Доля</th></tr></thead>
+      <tbody id="topbody"></tbody>
+      <tfoot><tr><td id="top-foot">—</td><td></td><td class="r" id="top-sum">—</td><td></td></tr></tfoot>
+    </table>
+  </div>
+</div>
 </main>
 
 <!-- ===================== RIGHT RAIL ===================== -->
 <aside class="aside">
-  <div class="aside-h"><div class="t">ОТК · сегодня</div><span class="date-pill"><svg class="ico"><use href="#i-cal"/></svg>Вт, 09.06</span></div>
-
-  <div class="shiftbar">
-    <div class="sh-top"><span class="l">ПРИНЯТО ЗА СМЕНУ</span><span class="v"><span class="num" id="r-ok">12</span><span class="of"> / 18 изделий</span></span></div>
-    <div class="track"><i id="r-okbar" style="width:67%"></i></div>
-    <div class="sh-foot"><span>контролёры: Никита · Михаил</span><span id="r-okfoot">67% плана смены</span></div>
-  </div>
-
+  <div class="aside-h"><div class="t">Аналитика · цех</div><span class="date-pill"><svg class="ico"><use href="#i-cal"/></svg>вт · 09.06.2026</span></div>
   <div class="railscroll">
-    <div class="rail-cap">ТРЕБУЕТ РЕАКЦИИ<span class="cnt red">3</span></div>
-    <div class="rrow"><span class="ric amber"><svg class="ico"><use href="#i-clock"/></svg></span><div class="rtx"><div class="rt">Доработка №250 &gt; 24 ч</div><div class="rs">не держит ёмкость · повторный прогон</div></div></div>
-    <div class="rrow"><span class="ric indigo"><svg class="ico"><use href="#i-shield"/></svg></span><div class="rtx"><div class="rt">Партия №260 · AQL</div><div class="rs">выборка 8 из 26 · начать приёмку</div></div></div>
-    <div class="rrow"><span class="ric red"><svg class="ico"><use href="#i-doc"/></svg></span><div class="rtx"><div class="rt">Акт списания · 2 элемента</div><div class="rs">ждёт согласования начальника</div></div></div>
-
-    <div class="rail-cap">ЭСКАЛАЦИИ · ОТПРАВЛЕНО<span class="cnt blue" id="r-esc-cnt">1</span></div>
-    <div id="r-esc">
-      <div class="rrow"><span class="ric red"><svg class="ico"><use href="#i-send"/></svg></span><div class="rtx"><div class="rt">Претензия → закупщику · ПР-0603-01</div><div class="rs">BSL Battery · ёмкость ниже номинала</div></div></div>
+    <div class="rail-cap">ДЕНЬ · ДЕТАЛИЗАЦИЯ</div>
+    <div class="daycard" id="daycard">
+      <div class="dch"><span class="dcd" id="dc-date">—</span><span class="dc-badge" id="dc-badge">—</span></div>
+      <div class="dcv" id="dc-val">—</div>
+      <div class="dcn">норма цеха 30 н.ч/день · 4 сборщика</div>
+      <div id="dc-items"></div>
+      <div class="dc-cnt" id="dc-cnt">—</div>
     </div>
-
-    <div class="rail-cap">ПРИЧИНЫ БРАКА · МЕСЯЦ</div>
-    <div class="par"><div class="pl2"><span>Пайка БМС</span><b>4</b></div><div class="pt2"><i style="width:100%"></i></div></div>
-    <div class="par"><div class="pl2"><span>Сварной шов</span><b>2</b></div><div class="pt2"><i style="width:50%"></i></div></div>
-    <div class="par"><div class="pl2"><span>Ёмкость ниже номинала</span><b>2</b></div><div class="pt2"><i style="width:50%"></i></div></div>
-    <div class="par"><div class="pl2"><span>Корпус · крышка</span><b>1</b></div><div class="pt2"><i style="width:25%"></i></div></div>
-
-    <div class="rail-cap">РЕГЛАМЕНТ СМЕНЫ</div>
-    <div class="rrow"><span class="ric green"><svg class="ico"><use href="#i-check"/></svg></span><div class="rtx"><div class="rt">Подготовка рабочего места</div><div class="rs">зарядные, оборудование, материалы</div></div></div>
-    <div class="rrow"><span class="ric cyan"><svg class="ico"><use href="#i-clock"/></svg></span><div class="rtx"><div class="rt">Конец дня: пауза проверки АКБ</div><div class="rs">паяльные/сварочные станции — выкл.</div></div></div>
-
+    <div class="rail-cap">КЛЮЧЕВЫЕ ОТКЛОНЕНИЯ<span class="cnt red">3</span></div>
+    <div class="rrow" id="dev-day"><span class="ric amber"><svg class="ico"><use href="#i-alert"/></svg></span><div class="rtx"><div class="rt">03.06 — выработка 22 н.ч при норме 30</div><div class="rs">погрузочно-разгрузочные работы и простои</div></div></div>
+    <div class="rrow" id="dev-deficit"><span class="ric red"><svg class="ico"><use href="#i-box"/></svg></span><div class="rtx"><div class="rt">Дефициты комплектующих: 2 позиции</div><div class="rs">корпус ABS (№274) · разъём REMA 320А (№252)</div></div></div>
+    <div class="rrow" id="dev-rework"><span class="ric amber"><svg class="ico"><use href="#i-wrench"/></svg></span><div class="rtx"><div class="rt">Доработка дольше 24 ч — №248</div><div class="rs">4×ICP103450DA Moli · просрочка к 06.06</div></div></div>
     <div class="divln"></div>
-
-    <!-- Deferred AI · Iteration 1 -->
     <div class="ai-soon">
       <div class="as-h"><span class="as-ic"><svg class="ico"><use href="#i-spark"/></svg></span><span class="as-t">Помощники ИИ</span><span class="as-badge">ИТЕРАЦИЯ 1</span></div>
-      <div class="as-li"><svg class="ico"><use href="#i-cam"/></svg>Фотоконтроль швов и пайки</div>
-      <div class="as-li"><svg class="ico"><use href="#i-trend"/></svg>Предикт брака по партии</div>
-      <div class="as-li"><svg class="ico"><use href="#i-doc"/></svg>Авто-протокол испытаний</div>
-      <div class="as-li"><svg class="ico"><use href="#i-gauge"/></svg>Аномалии измерений анализатора</div>
+      <div class="as-li"><svg class="ico"><use href="#i-trend"/></svg>Прогноз выполнения плана месяца</div>
+      <div class="as-li"><svg class="ico"><use href="#i-alert"/></svg>Поиск аномалий брака и выработки</div>
+      <div class="as-li"><svg class="ico"><use href="#i-gauge"/></svg>Рекомендации по загрузке цеха</div>
       <div class="as-note">Появятся после запуска операционного контура. Прототип работает без ИИ — на ручных и реальных данных.</div>
     </div>
-
-    <div class="rail-link"><a>Акты и протоколы испытаний <svg class="ico sm"><use href="#i-chev"/></svg></a></div>
+    <div class="rail-link"><a>Открыть выработку и оценку <svg class="ico sm"><use href="#i-chev"/></svg></a></div>
   </div>
 </aside>
 
-</div><!-- /app -->
-
-<!-- ===================== SCRAP CONFIRM MODAL ===================== -->
-<div class="modal" id="scrapModal" hidden>
-  <div class="modal-card">
-    <div class="mc-h mc-h--danger"><svg class="ico"><use href="#i-alert"/></svg>Оформить брак и акт списания?</div>
-    <div class="mc-b">
-      <div class="del-name" id="sc-name">—</div>
-      <div class="fld"><label>Причина брака</label><input id="sc-reason" placeholder="Напр. пайка БМС · непропай"><span class="hintx">попадёт в акт, претензию и статистику причин</span></div>
-      <div class="fld"><label>Источник несоответствия</label>
-        <select id="sc-src" class="fsel"><option value="comp">Комплектующее · вина поставщика</option><option value="asm">Сборка · внутренний брак</option></select></div>
-      <div class="fld" id="sc-comp-fld"><label>Комплектующее · поставщик</label><select id="sc-comp" class="fsel"></select></div>
-      <div class="chk"><input type="checkbox" id="sc-buyer" checked><label for="sc-buyer">Передать <b>закупщику</b> — претензия поставщику (паспорт, измерения, фото)</label></div>
-      <div class="chk"><input type="checkbox" id="sc-boss" checked disabled><label for="sc-boss">Уведомить <b>руководителя производства</b> — акт на согласование (обязательно)</label></div>
-    </div>
-    <div class="mc-foot">
-      <button class="btn" id="sc-cancel">Отмена</button>
-      <button class="btn btn--danger" id="sc-confirm"><svg class="ico sm"><use href="#i-x"/></svg>Оформить брак и отправить</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== NC ESCALATION MODAL ===================== -->
-<div class="modal" id="escModal" hidden>
-  <div class="modal-card">
-    <div class="mc-h"><svg class="ico"><use href="#i-send"/></svg>Передать данные о несоответствии</div>
-    <div class="mc-b">
-      <div class="del-name" style="background:var(--amber-bg);border-color:#F4E1AE" id="esc-name">—</div>
-      <div class="fld"><label>Несоответствие</label><input id="esc-reason" placeholder="Что не так"><span class="hintx">подтянуто из чек-листа и измерений · можно уточнить</span></div>
-      <div class="fld"><label>Источник несоответствия</label>
-        <select id="esc-src" class="fsel"><option value="comp">Комплектующее · вина поставщика</option><option value="asm">Сборка · внутренний</option></select></div>
-      <div class="fld" id="esc-comp-fld"><label>Комплектующее · поставщик</label><select id="esc-comp" class="fsel"></select></div>
-      <div id="esc-rcp" style="display:flex;flex-direction:column;gap:13px;border:1px solid transparent;border-radius:10px;padding:5px;margin:-6px">
-        <div class="chk"><input type="checkbox" id="esc-buyer" checked><label for="esc-buyer">Передать <b>закупщику</b> — претензия поставщику</label></div>
-        <div class="chk"><input type="checkbox" id="esc-boss" checked><label for="esc-boss">Уведомить <b>руководителя производства</b></label></div>
-      </div>
-      <div class="hintx">К пакету приложатся: паспорт изделия, протокол измерений, фото, № партии комплектующего. Решение по единице (доработка / брак) принимается отдельно.</div>
-    </div>
-    <div class="mc-foot">
-      <button class="btn" id="esc-cancel">Отмена</button>
-      <button class="btn btn--pri" id="esc-confirm"><svg class="ico sm"><use href="#i-send"/></svg>Отправить</button>
-    </div>
-  </div>
 </div>
 
 <script>
-/* ===== Items in queue (паспорт из листа ОТК) ===== */
-const ITEMS={
- '250':{no:'№250', title:'Аккумулятор LiFePO4 RADIAN 12V 100Ah', mode:'re', modeT:'повторный прогон', qty:1, total:2, asm:'Артём',
-   id1c:'РАД-12100-0626-02', date:'05.06.2026', u:'12,8 В', c:'100 Ач', r:'≤ 25 мОм', w:'13,5 кг',
-   groups:[
-     {t:'Визуальный контроль', items:['Сварные соединения — без прожогов и отрывов','Пайка БМС — без перемычек, флюс отмыт','Термоусадка и изоляция — без повреждений','Крышка и метизы — затянуты, без зазора']},
-     {t:'Функциональная проверка', items:['Защита БМС — срабатывание при КЗ','Индикатор заряда — работает','Полярность и разъём — соответствие']}
-   ],
-   meas:[
-     {k:'u', t:'Напряжение покоя', tol:'13,0–13,6', min:13.0, max:13.6, un:'В'},
-     {k:'d', t:'Разброс ячеек', tol:'≤ 30', min:0, max:30, un:'мВ'},
-     {k:'r', t:'Внутреннее сопротивление', tol:'≤ 25', min:0, max:25, un:'мОм'},
-     {k:'cap', t:'Ёмкость · контрольный разряд (анализатор)', tol:'≥ 100', min:100, max:999, un:'Ач'}
-   ]},
- '259':{no:'№259', title:'Аккумулятор EVE 10×INR18650 5000mAh 18V', mode:'full', modeT:'100% контроль', qty:3, total:7, asm:'Михаил',
-   id1c:'EVE-18-0626-114', date:'08.06.2026', u:'18,0 В', c:'5,0 Ач', r:'≤ 60 мОм', w:'0,9 кг',
-   groups:[
-     {t:'Визуальный контроль', items:['Точечная сварка — без прожогов','Никелевая лента — без надрывов','Термоусадка — плотная, без пустот','Маркировка 1С и этикетка — соответствие']},
-     {t:'Функциональная проверка', items:['Плата защиты — срабатывание','Разъём — фиксация, полярность']}
-   ],
-   meas:[
-     {k:'u', t:'Напряжение покоя', tol:'19,5–21,0', min:19.5, max:21.0, un:'В'},
-     {k:'d', t:'Разброс ячеек', tol:'≤ 40', min:0, max:40, un:'мВ'},
-     {k:'cap', t:'Ёмкость · контрольный разряд (анализатор)', tol:'≥ 5,0', min:5.0, max:99, un:'Ач'}
-   ]},
- '260':{no:'№260', title:'Аккумулятор BSL 10×INR18650 18V для Bull', mode:'aql', modeT:'AQL · 8 из 26', qty:8, total:26, asm:'Руслан',
-   id1c:'BSL-18B-0626-033', date:'09.06.2026', u:'18,0 В', c:'2,0 Ач', r:'≤ 80 мОм', w:'0,8 кг',
-   groups:[
-     {t:'Визуальный контроль (по выборке)', items:['Точечная сварка — без прожогов','Термоусадка — без повреждений','Маркировка партии — соответствие 1С']},
-     {t:'Функциональная проверка', items:['Плата защиты — срабатывание','Разъём — полярность']}
-   ],
-   meas:[
-     {k:'u', t:'Напряжение покоя (среднее по выборке)', tol:'19,5–21,0', min:19.5, max:21.0, un:'В'},
-     {k:'cap', t:'Ёмкость образца (анализатор)', tol:'≥ 2,0', min:2.0, max:99, un:'Ач'}
-   ]},
- '255':{no:'№255', title:'ER17505 FANSO с выводами 2PF · партия 300', mode:'aql', modeT:'AQL · 13 из 300', qty:13, total:300, asm:'Николай',
-   id1c:'FAN-175-0626-300', date:'09.06.2026', u:'3,6 В', c:'3,4 Ач', r:'—', w:'18 г',
-   groups:[
-     {t:'Визуальный контроль (по выборке)', items:['Приварка выводов 2PF — без подгаров','Изоляция вывода — без замыкания','Маркировка — дата и партия']}
-   ],
-   meas:[
-     {k:'u', t:'Напряжение разомкнутой цепи', tol:'≥ 3,6', min:3.6, max:3.95, un:'В'}
-   ]}
-};
-const ORDER=['250','259','260','255'];
-/* комплектующие с поставщиками — для претензий закупщику */
-ITEMS['250'].comps=[['Аккумулятор IFR27175200A 105Ah','Ganfeng Lithium'],['BMS 4S 100A','Daly Electronics'],['Корпус ABS + крышка','С.Д. Пластик'],['Индикатор 4S LiFePO','Shenzhen Lead']];
-ITEMS['259'].comps=[['Аккумулятор EVE INR18650-50E','EVE Energy'],['Плата защиты 5S','JBD'],['Никелевая лента 0,1×4мм','НикПром']];
-ITEMS['260'].comps=[['Аккумулятор BSL INR18650-2000','BSL Battery'],['Никелевая лента 4/6мм','НикПром']];
-ITEMS['255'].comps=[['Элемент FANSO ER17505','FANSO · Wuhan'],['Вывод 2PF','НикПром']];
-let CUR='250';
-let SHIFT_OK=12, SHIFT_PLAN=18, REWORK=2;
+/* ===== Канон демо-данных · июнь 2026 =====
+   Нормо-час — базовая единица. Норма цеха 30 н.ч/день (4 сборщика × 7,5),
+   мощность 704 н.ч/мес, план июня 660, факт 412 (62%), премия 6,25 BYN/н.ч. */
+const NORM_CHEH = 30, PREM = 6.25, CAP = 704;
 
-/* state per item: st.checks[gi][ii] = ''|'ok'|'bad'; st.meas[k]=value */
-Object.values(ITEMS).forEach(it=>{ it.st={checks:it.groups.map(g=>g.items.map(()=>'') ), meas:{}}; });
-/* №250 — повторный: визуалка уже принята ранее */
-ITEMS['250'].st.checks[0]=['ok','ok','ok','ok'];
-ITEMS['250'].st.meas={u:'13,28', d:'18', r:'24,5'};
-
-const fmt=v=>String(v).replace('.', ',');
-const num=v=>parseFloat(String(v).replace(',','.'));
-const plural=(n,one,few,many)=>{const m10=n%10,m100=n%100;return m10===1&&m100!==11?one:m10>=2&&m10<=4&&(m100<12||m100>14)?few:many;};
-
-/* ===== Queue ===== */
-function buildQueue(){
-  document.getElementById('qlist').innerHTML=ORDER.map(id=>{
-    const it=ITEMS[id];
-    return `<div class="qitem ${id===CUR?'sel':''}" data-id="${id}">
-      <div class="qt"><span class="po">${it.no}</span><span class="qmode ${it.mode}">${it.modeT}</span></div>
-      <div class="qn">${it.title}</div>
-      <div class="qb"><span>к контролю: <b>${it.qty}</b> из ${it.total}</span><span>сборщик: ${it.asm}</span></div>
-    </div>`;
-  }).join('');
-  document.querySelectorAll('.qitem').forEach(el=>el.addEventListener('click',()=>{CUR=el.dataset.id;buildQueue();renderProto();}));
-  // KPI очереди
-  const units=ORDER.reduce((s,id)=>s+ITEMS[id].qty,0);
-  document.getElementById('k-q').textContent=units;
-  document.getElementById('k-q-bar').style.width=Math.min(100,units*3)+'%';
-  document.getElementById('k-q-f').textContent=`${ORDER.length} ${plural(ORDER.length,'позиция','позиции','позиций')} в очереди`;
-}
-
-/* ===== Protocol ===== */
-function renderProto(){
-  const it=ITEMS[CUR];
-  document.getElementById('p-no').textContent=it.no;
-  document.getElementById('p-title').textContent=it.title;
-  document.getElementById('p-id').textContent=it.id1c;
-  document.getElementById('p-qty').textContent=`${it.qty} из ${it.total}`;
-  document.getElementById('p-date').textContent=it.date;
-  document.getElementById('p-asm').textContent=it.asm;
-  document.getElementById('p-u').textContent=it.u;
-  document.getElementById('p-c').textContent=it.c;
-  document.getElementById('p-r').textContent=it.r;
-  document.getElementById('p-w').textContent=it.w;
-
-  const wrap=document.getElementById('ckwrap');
-  let html='';
-  it.groups.forEach((g,gi)=>{
-    html+=`<div class="ckg"><div class="ckg-h">${g.t}<span class="cnt2">${g.items.length} пунктов</span></div>`;
-    g.items.forEach((ci,ii)=>{
-      const st=it.st.checks[gi][ii];
-      html+=`<div class="ck ${st}" data-g="${gi}" data-i="${ii}">
-        <div class="ct">${ci}</div>
-        <div class="ckbtns">
-          <button class="ckb ${st==='ok'?'on-ok':''}" data-v="ok" title="Соответствует"><svg class="ico"><use href="#i-check"/></svg></button>
-          <button class="ckb ${st==='bad'?'on-bad':''}" data-v="bad" title="Несоответствие"><svg class="ico"><use href="#i-x"/></svg></button>
-        </div></div>`;
-    });
-    html+=`</div>`;
-  });
-  html+=`<div class="ckg"><div class="ckg-h">Электрические параметры · измерения<span class="cnt2">${it.meas.length} измер.</span></div>`;
-  it.meas.forEach(m=>{
-    const v=it.st.meas[m.k]??'';
-    html+=`<div class="ms" data-k="${m.k}">
-      <div class="mt">${m.t}<div class="tol">допуск: ${m.tol} ${m.un}</div></div>
-      <input type="number" step="0.01" value="${String(v).replace(',','.')}" data-k="${m.k}">
-      <span class="un">${m.un}</span><span class="mtag na">не измерено</span></div>`;
-  });
-  html+=`</div>`;
-  wrap.innerHTML=html;
-
-  // bind checks
-  wrap.querySelectorAll('.ck .ckb').forEach(b=>b.addEventListener('click',()=>{
-    const row=b.closest('.ck'); const gi=+row.dataset.g, ii=+row.dataset.i, v=b.dataset.v;
-    it.st.checks[gi][ii]=(it.st.checks[gi][ii]===v)?'':v;
-    renderProto();
-  }));
-  // bind measurements
-  wrap.querySelectorAll('.ms input').forEach(inp=>{
-    const apply=()=>{ it.st.meas[inp.dataset.k]=inp.value; validateMeas(it); refreshDecision(it); };
-    inp.addEventListener('input',apply);
-  });
-  validateMeas(it);
-  refreshDecision(it);
-}
-function validateMeas(it){
-  document.querySelectorAll('#ckwrap .ms').forEach(row=>{
-    const m=it.meas.find(x=>x.k===row.dataset.k);
-    const v=num(it.st.meas[m.k]);
-    const tag=row.querySelector('.mtag');
-    row.classList.remove('ok','bad');
-    if(isNaN(v)){ tag.className='mtag na'; tag.textContent='не измерено'; return; }
-    const good=v>=m.min&&v<=m.max;
-    tag.className='mtag '+(good?'ok':'bad');
-    tag.textContent=good?'в допуске':'вне допуска';
-    row.classList.add(good?'ok':'bad');
-  });
-}
-function readiness(it){
-  const flat=it.st.checks.flat();
-  const okC=flat.filter(v=>v==='ok').length, badC=flat.filter(v=>v==='bad').length;
-  const mVals=it.meas.map(m=>num(it.st.meas[m.k]));
-  const mDone=mVals.filter(v=>!isNaN(v)).length;
-  const mOk=it.meas.filter((m,i)=>!isNaN(mVals[i])&&mVals[i]>=m.min&&mVals[i]<=m.max).length;
-  const mBad=mDone-mOk;
-  return {okC,badC,total:flat.length,mDone,mOk,mBad,mTotal:it.meas.length,
-    hasNC: badC>0 || mBad>0,
-    canAccept: badC===0 && okC===flat.length && mOk===it.meas.length};
-}
-function refreshDecision(it){
-  const r=readiness(it);
-  document.getElementById('dec-ready').innerHTML=
-    `Чек-лист: <b>${r.okC}/${r.total}</b>${r.badC?` · <b style="color:var(--red)">${r.badC} несоотв.</b>`:''} · Измерения в допуске: <b>${r.mOk}/${r.mTotal}</b>${r.mBad?` · <b style="color:var(--red)">${r.mBad} вне</b>`:''}`;
-  document.getElementById('btnOk').disabled=!r.canAccept;
-  document.getElementById('btnEsc').disabled=!r.hasNC;
-}
-
-/* ===== Журнал ===== */
-const JRN=[
- ['09:42','№268','Fanso ER14505 с разъёмом BLS-2 · 20 шт','ok','Принято','Никита'],
- ['09:10','№272','5×EVE ICR18650 18V · 1 шт','ok','Принято','Никита'],
- ['08:35','№250','RADIAN 12V 100Ah · 1 шт','re','Доработка · ёмкость','Михаил']
+/* Месячные ряды года: июнь = канон. Июль–декабрь — план без факта. */
+const MONTHS = [
+  {n:'Янв', plan:600, fact:580, eff:78, fpy:87, pass:93, brak:2.4, acc:168},
+  {n:'Фев', plan:620, fact:596, eff:80, fpy:88, pass:94, brak:2.2, acc:175},
+  {n:'Мар', plan:640, fact:654, eff:84, fpy:90, pass:95, brak:2.0, acc:190},
+  {n:'Апр', plan:650, fact:612, eff:79, fpy:88, pass:94, brak:2.1, acc:172},
+  {n:'Май', plan:660, fact:631, eff:81, fpy:91, pass:95, brak:1.9, acc:188},
+  {n:'Июн', plan:660, fact:412, eff:64, fpy:89, pass:96, brak:1.8, acc:184},
+  {n:'Июл', plan:660, fact:0},
+  {n:'Авг', plan:640, fact:0},
+  {n:'Сен', plan:660, fact:0},
+  {n:'Окт', plan:680, fact:0},
+  {n:'Ноя', plan:670, fact:0},
+  {n:'Дек', plan:640, fact:0}
 ];
-function buildJrn(){
-  document.getElementById('jbody').innerHTML=JRN.map(r=>
-    `<tr><td class="tm">${r[0]}</td><td><span class="nm2">${r[1]}</span> · ${r[2]}</td><td style="text-align:right"><span class="jres ${r[3]}">${r[4]}</span></td><td class="tm" style="text-align:right">${r[5]}</td></tr>`).join('');
-  document.getElementById('j-cnt').textContent=JRN.length+' записей';
+
+/* Дни июня 01–09 (сб/вс — выходные), сумма = 412 н.ч */
+const DAYS = [
+  {l:'01', wd:'пн', v:56, items:[['RADIAN LiFePO4 48V 460Ah · №243',24],['BSL 10×INR18650 18V Bull · №260',20],['Прочие сборки и элементы',12]]},
+  {l:'02', wd:'вт', v:61, items:[['BSL 10×INR18650 18V Bull · №260',26],['RADIAN LiFePO4 48V 460Ah · №243',21],['4×ICP103450DA Moli · №248',14]]},
+  {l:'03', wd:'ср', v:22, items:[['4×ICP103450DA Moli · №248',12],['Прочие сборки и элементы',10]]},
+  {l:'04', wd:'чт', v:58, items:[['RADIAN LiFePO4 48V 460Ah · №243',28],['BSL 10×INR18650 18V Bull · №260',18],['Прочие сборки и элементы',12]]},
+  {l:'05', wd:'пт', v:64, items:[['4×ICP103450DA Moli · №248',30],['BSL 10×INR18650 18V Bull · №260',24],['LiFePO4 RADIAN 12V 100Ah · №250',10]]},
+  {l:'06', wd:'сб', v:0, items:[]},
+  {l:'07', wd:'вс', v:0, items:[]},
+  {l:'08', wd:'пн', v:73, items:[['RADIAN LiFePO4 48V 460Ah · №243',36],['BSL 10×INR18650 18V Bull · №260',30],['EVE 10×INR18650 5000mAh 18V · №259',7]]},
+  {l:'09', wd:'вт', v:78, items:[['4×ICP103450DA Moli · №248',34],['RADIAN LiFePO4 48V 460Ah · №243',26],['Прочие сборки и элементы',18]]}
+];
+
+/* Причины брака (июнь = канон: пайка БМС 4, шов 2, ёмкость 2, корпус 1) */
+const BRAK = {
+  m:[['Пайка БМС',4],['Сварной шов',2],['Ёмкость ниже номинала',2],['Корпус/крышка',1]],
+  q:[['Пайка БМС',11],['Сварной шов',6],['Ёмкость ниже номинала',5],['Корпус/крышка',3]],
+  y:[['Пайка БМС',21],['Сварной шов',13],['Ёмкость ниже номинала',11],['Корпус/крышка',7]]
+};
+
+/* Вклад сборщиков (месяц = канон выработки) */
+const TEAM = {
+  m:[['Михаил','#6366F1',63.1],['Руслан','#E8920C',28.35],['Артём','#0891B2',18.9],['Николай','#16A34A',17]],
+  q:[['Михаил','#6366F1',386.5],['Руслан','#E8920C',232.4],['Артём','#0891B2',198.6],['Николай','#16A34A',173.9]],
+  y:[['Михаил','#6366F1',818.2],['Руслан','#E8920C',540.6],['Артём','#0891B2',472.1],['Николай','#16A34A',401.4]]
+};
+
+/* Топ изделий: [название, шт, н.ч] — из канона заявок */
+const TOP = {
+  m:[['№243 · RADIAN LiFePO4 48V 460Ah',1,40],['№248 · 4×ICP103450DA Moli',70,35],['№260 · BSL 10×INR18650 18V Bull',33,33],['№250 · LiFePO4 RADIAN 12V 100Ah',2,10],['№259 · EVE 10×INR18650 5000mAh 18V',7,7]],
+  q:[['RADIAN LiFePO4 48V 460Ah',3,120],['BSL 10×INR18650 18V Bull',96,96],['4×ICP103450DA Moli',140,70],['LiFePO4 RADIAN 12V 200Ah',9,45],['LiFePO4 RADIAN 12V 100Ah',8,40],['EVE 10×INR18650 5000mAh 18V',21,21]],
+  y:[['RADIAN LiFePO4 48V 460Ah',7,280],['BSL 10×INR18650 18V Bull',198,198],['4×ICP103450DA Moli',320,160],['LiFePO4 RADIAN 12V 200Ah',24,120],['LiFePO4 RADIAN 12V 100Ah',19,95],['ER17505 4PF FANSO',1200,24]]
+};
+
+const P_IDX = {m:[5], q:[3,4,5], y:[0,1,2,3,4,5,6,7,8,9,10,11]};
+const PASS_IDX = {m:[0,1,2,3,4,5], q:[3,4,5], y:[0,1,2,3,4,5]};
+const P_LAB = {m:'Июнь 2026', q:'II квартал 2026', y:'2026 год'};
+const P_SUB = {
+  m:'Июнь 2026 · факт на 09.06.2026 · мощность цеха 704 н.ч/мес',
+  q:'II квартал 2026 · апрель–июнь · факт на 09.06.2026',
+  y:'2026 год · факт за 6 месяцев · план 7 780 н.ч'
+};
+const PASS_CAP = {m:'январь–июнь 2026', q:'апрель–июнь 2026', y:'январь–июнь 2026'};
+
+const fmt = n => (Math.round(n*10)/10).toLocaleString('ru-RU', {maximumFractionDigits:1});
+const money = n => Math.round(n).toLocaleString('ru-RU');
+const plu = (n,a,b,c) => { const m=n%100, d=n%10; return (m>=12&&m<=14)?c:(d===1?a:(d>=2&&d<=4?b:c)); };
+const el = id => document.getElementById(id);
+
+let PERIOD = 'm', SEL = 8;
+
+/* ===== KPI ===== */
+function aggr(p){
+  const idx = P_IDX[p];
+  const plan = idx.reduce((a,i)=>a+MONTHS[i].plan, 0);
+  const fm = idx.map(i=>MONTHS[i]).filter(m=>m.fact>0);
+  const fact = fm.reduce((a,m)=>a+m.fact, 0);
+  const acc = fm.reduce((a,m)=>a+m.acc, 0);
+  const wf = k => fm.reduce((a,m)=>a+m.fact*m[k], 0)/fact;
+  const wa = k => fm.reduce((a,m)=>a+m.acc*m[k], 0)/acc;
+  return {plan, fact, acc,
+    eff: Math.round(wf('eff')),
+    fpy: Math.round(wa('fpy')),
+    pass: Math.round(wa('pass')),
+    brak: Math.round(wa('brak')*10)/10};
 }
-function now(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
-function log(res, cls, label){
-  const it=ITEMS[CUR];
-  JRN.unshift([now(), it.no, it.title+' · 1 шт', cls, label, 'Никита']);
-  buildJrn();
+function renderKpis(p){
+  const a = aggr(p);
+  const pct = Math.round(a.fact/a.plan*100);
+  el('k-vyr').textContent = fmt(a.fact);
+  el('k-vyr-of').textContent = `/ ${fmt(a.plan)} н.ч`;
+  el('k-vyr-bar').style.width = pct + '%';
+  el('k-vyr-f').textContent = `${pct}% плана периода`;
+  el('k-eff').textContent = a.eff;
+  el('k-eff-bar').style.width = a.eff + '%';
+  el('k-fpy').textContent = a.fpy;
+  el('k-fpy-bar').style.width = a.fpy + '%';
+  el('k-pass').textContent = a.pass;
+  el('k-pass-bar').style.width = a.pass + '%';
+  el('k-pass-f').textContent = `принято ${money(a.acc)} ${plu(a.acc,'изделие','изделия','изделий')}`;
+  el('k-brak').textContent = fmt(a.brak);
+  el('k-brak-bar').style.width = Math.min(100, a.brak/2*100) + '%';
+  const bf = el('k-brak-f');
+  bf.textContent = a.brak <= 2 ? 'в норме · порог ≤ 2%' : 'выше порога ≤ 2%';
+  bf.className = 'kpi-foot ' + (a.brak <= 2 ? 'ok' : 'bad');
+  el('k-prem').textContent = money(a.fact*PREM);
+  el('k-prem-f').textContent = `${fmt(a.fact)} н.ч × 6,25 BYN`;
 }
 
-/* ===== Decisions ===== */
-function consumeUnit(){
-  const it=ITEMS[CUR];
-  it.qty-=1;
-  if(it.qty<=0){ const i=ORDER.indexOf(CUR); ORDER.splice(i,1); CUR=ORDER[0]||null; }
-  buildQueue();
-  if(CUR) renderProto(); else renderEmpty();
+/* ===== График 1: выработка по дням июня (SVG) ===== */
+function renderDays(){
+  const max = 80, plotH = 128, base = 150, slot = 80, barW = 46;
+  const ny = base - NORM_CHEH/max*plotH;
+  let s = `<line class="norml" x1="0" y1="${ny}" x2="720" y2="${ny}"></line>` +
+    `<text class="norml-lab" x="718" y="${ny-6}" text-anchor="end">норма 30 н.ч/день</text>`;
+  DAYS.forEach((d,i)=>{
+    const cx = i*slot + slot/2;
+    const h = d.v>0 ? Math.max(6, d.v/max*plotH) : 3;
+    const y = base - h;
+    const cls = d.v===0 ? 'dbar zero' : (d.v<NORM_CHEH ? 'dbar lo' : 'dbar');
+    s += `<rect class="${cls}${i===SEL?' sel':''}" data-d="${i}" x="${cx-barW/2}" y="${y}" width="${barW}" height="${h}" rx="7"></rect>`;
+    s += `<text class="dvv ${d.v===0?'axl':'axv'}" x="${cx}" y="${y-7}" text-anchor="middle">${d.v===0?'—':fmt(d.v)}</text>`;
+    s += `<text class="dlb axv" x="${cx}" y="${base+18}" text-anchor="middle">${d.l}</text>`;
+    s += `<text class="dwd axl" x="${cx}" y="${base+33}" text-anchor="middle">${d.wd}</text>`;
+    s += `<rect class="dhit" data-d="${i}" x="${i*slot}" y="0" width="${slot}" height="196"></rect>`;
+  });
+  el('ch-days').innerHTML = s;
+  const total = DAYS.reduce((a,d)=>a+d.v, 0);
+  el('days-sum').textContent = `итого ${fmt(total)} н.ч · норма 30 н.ч/день`;
 }
-function renderEmpty(){
-  // очередь пуста: прячем протокол и решения (inline display — атрибут hidden перебивается классовыми display:flex/grid)
-  const p=document.getElementById('proto');
-  [...p.children].forEach(c=>{ if(c.id!=='proto-empty') c.style.display='none'; });
-  if(!document.getElementById('proto-empty'))
-    p.insertAdjacentHTML('beforeend','<div class="empty" id="proto-empty" style="text-align:center;padding:46px 16px;font-size:13px">Очередь пуста — все позиции обработаны</div>');
+function markSel(){
+  document.querySelectorAll('#ch-days .dbar').forEach(b=>b.classList.toggle('sel', +b.dataset.d===SEL));
 }
-function bumpShift(){
-  SHIFT_OK++;
-  document.getElementById('r-ok').textContent=SHIFT_OK;
-  const p=Math.round(SHIFT_OK/SHIFT_PLAN*100);
-  document.getElementById('r-okbar').style.width=Math.min(100,p)+'%';
-  document.getElementById('r-okfoot').textContent=p+'% плана смены';
+function renderDayCard(i){
+  const d = DAYS[i];
+  el('dc-date').textContent = `${d.wd} · ${d.l}.06.2026`;
+  const bg = el('dc-badge');
+  if (d.v === 0) { bg.textContent = 'выходной'; bg.className = 'dc-badge na'; }
+  else if (d.v < NORM_CHEH) { bg.textContent = `ниже нормы -${fmt(NORM_CHEH-d.v)}`; bg.className = 'dc-badge bad'; }
+  else { bg.textContent = `норма +${fmt(d.v-NORM_CHEH)}`; bg.className = 'dc-badge ok'; }
+  el('dc-val').textContent = `${fmt(d.v)} н.ч`;
+  el('dc-items').innerHTML = d.items.length
+    ? d.items.map(it=>`<div class="dci"><span>${it[0]}</span><b>${fmt(it[1])} н.ч</b></div>`).join('')
+    : '<div class="dc-empty">Выходной день — нарядов нет</div>';
+  el('dc-cnt').textContent = `${d.items.length} ${plu(d.items.length,'позиция','позиции','позиций')}`;
 }
-document.getElementById('btnOk').addEventListener('click',()=>{
-  const it=ITEMS[CUR];
-  log('ok','ok','Принято');
-  bumpShift();
-  // сброс протокола под следующую единицу
-  it.st={checks:it.groups.map(g=>g.items.map(()=>'')), meas:{}};
-  consumeUnit();
-});
-document.getElementById('re-reason').addEventListener('change',()=>{
-  const sel=document.getElementById('re-reason'), inp=document.getElementById('re-custom');
-  inp.hidden=sel.value!=='__custom';
-  if(!inp.hidden) inp.focus();
-});
-document.getElementById('btnRe').addEventListener('click',()=>{
-  const sel=document.getElementById('re-reason'), inp=document.getElementById('re-custom');
-  let reason=sel.value;
-  if(reason==='__custom'){
-    reason=inp.value.trim();
-    if(!reason){ inp.focus(); inp.style.borderColor='var(--amber)'; setTimeout(()=>inp.style.borderColor='',900); return; }
-    // своя причина остаётся в списке — в следующий раз доступна из выпадающего
-    if(![...sel.options].some(o=>o.value!=='__custom'&&o.text===reason))
-      sel.add(new Option(reason), sel.querySelector('option[value="__custom"]'));
-    inp.value=''; inp.hidden=true;
-  }
-  if(!reason){ sel.focus(); sel.style.borderColor='var(--amber)'; setTimeout(()=>sel.style.borderColor='',900); return; }
-  log('re','re','Доработка · '+reason.split(' ·')[0]);
-  REWORK++; document.getElementById('k-re').textContent=REWORK;
-  document.getElementById('k-re-bar').style.width=Math.min(100,REWORK*10)+'%';
-  const it=ITEMS[CUR];
-  it.st={checks:it.groups.map(g=>g.items.map(()=>'')), meas:{}};
-  sel.value='';
-  consumeUnit();
-});
-/* ===== Эскалации: закупщику · руководителю ===== */
-let CLAIM_N=1, ACT_N=2, ESC_CNT=1;
-const pad2=n=>String(n).padStart(2,'0');
-function fillComp(selId, it){
-  document.getElementById(selId).innerHTML=(it.comps||[]).map((c,i)=>`<option value="${i}">${c[0]} — ${c[1]}</option>`).join('');
-}
-function srcToggle(srcId, compFld, buyerId){
-  const isComp=document.getElementById(srcId).value==='comp';
-  document.getElementById(compFld).style.display=isComp?'':'none';
-  const buyer=document.getElementById(buyerId);
-  buyer.disabled=!isComp; if(!isComp) buyer.checked=false; else buyer.checked=true;
-}
-function railEsc(kind, title, sub){
-  ESC_CNT++; document.getElementById('r-esc-cnt').textContent=ESC_CNT;
-  const ic=kind==='buyer'?'red':'indigo';
-  const ico=kind==='buyer'?'i-send':'i-team';
-  document.getElementById('r-esc').insertAdjacentHTML('afterbegin',
-    `<div class="rrow"><span class="ric ${ic}"><svg class="ico"><use href="#${ico}"/></svg></span><div class="rtx"><div class="rt">${title}</div><div class="rs">${sub}</div></div></div>`);
-}
-function ncDefault(it){
-  for(let g=0; g<it.st.checks.length; g++){
-    const i=it.st.checks[g].indexOf('bad');
-    if(i>-1) return it.groups[g].items[i];
-  }
-  for(const m of it.meas){
-    const v=num(it.st.meas[m.k]);
-    if(!isNaN(v)&&(v<m.min||v>m.max)) return `${m.t}: ${fmt(it.st.meas[m.k])} ${m.un} (допуск ${m.tol})`;
-  }
-  return it.mode==='re'?'не держит ёмкость · повторный прогон':'';
-}
-function sendPack(it, reason, srcId, compId, buyerId, bossId, prefix){
-  const isComp=document.getElementById(srcId).value==='comp';
-  const buyer=document.getElementById(buyerId).checked && isComp;
-  const boss=document.getElementById(bossId).checked;
-  const comp=isComp?(it.comps[+document.getElementById(compId).value]||it.comps[0]):null;
-  const sent=[];
-  if(buyer){
-    CLAIM_N++; const id=`ПР-0610-${pad2(CLAIM_N)}`;
-    railEsc('buyer', `Претензия → закупщику · ${id}`, `${comp[1]} · ${comp[0]} · ${reason}`);
-    sent.push('закупщику');
-  }
-  if(boss){
-    railEsc('boss', `${prefix} → руководителю`, `${it.no} · ${reason}`);
-    sent.push('руководителю');
-  }
-  return sent;
+function bindDays(){
+  document.querySelectorAll('#ch-days .dhit').forEach(r=>{
+    r.addEventListener('click', ()=>{ SEL = +r.dataset.d; markSel(); renderDayCard(SEL); });
+    r.addEventListener('mouseenter', ()=>renderDayCard(+r.dataset.d));
+  });
+  el('ch-days').addEventListener('mouseleave', ()=>renderDayCard(SEL));
 }
 
-const escM=document.getElementById('escModal');
-document.getElementById('btnEsc').addEventListener('click',()=>{
-  const it=ITEMS[CUR];
-  document.getElementById('esc-name').textContent=it.no+' · '+it.title;
-  document.getElementById('esc-reason').value=ncDefault(it);
-  fillComp('esc-comp', it);
-  document.getElementById('esc-src').value='comp';
-  document.getElementById('esc-boss').checked=true;
-  srcToggle('esc-src','esc-comp-fld','esc-buyer');
-  escM.hidden=false;
-});
-document.getElementById('esc-src').addEventListener('change',()=>srcToggle('esc-src','esc-comp-fld','esc-buyer'));
-document.getElementById('esc-cancel').addEventListener('click',()=>escM.hidden=true);
-escM.addEventListener('click',e=>{ if(e.target===escM) escM.hidden=true; });
-document.getElementById('esc-confirm').addEventListener('click',()=>{
-  const it=ITEMS[CUR];
-  // ни одного получателя — отправлять некому: модалку не закрываем, подсвечиваем блок (паттерн пустой причины доработки)
-  if(!document.getElementById('esc-buyer').checked&&!document.getElementById('esc-boss').checked){
-    const rcp=document.getElementById('esc-rcp');
-    rcp.style.borderColor='var(--amber)'; setTimeout(()=>rcp.style.borderColor='transparent',900);
-    return;
-  }
-  const reason=document.getElementById('esc-reason').value.trim()||'несоответствие';
-  const sent=sendPack(it, reason, 'esc-src','esc-comp','esc-buyer','esc-boss','Несоответствие');
-  if(sent.length) log('re','re','НС передано · '+sent.join(' + '));
-  escM.hidden=true;
-});
+/* ===== График 2: план/факт по месяцам года (SVG) ===== */
+function renderMonths(p){
+  const max = 750, plotH = 120, base = 140;
+  const capY = base - CAP/max*plotH;
+  let s = `<line class="capline" x1="0" y1="${capY}" x2="720" y2="${capY}"></line>` +
+    `<text class="cap-lab" x="718" y="${capY-5}" text-anchor="end">мощность 704 н.ч</text>`;
+  MONTHS.forEach((m,i)=>{
+    const cx = i*60 + 30;
+    const cur = P_IDX[p].includes(i);
+    const hp = m.plan/max*plotH, yp = base - hp;
+    const hf = m.fact>0 ? m.fact/max*plotH : 3, yf = base - hf;
+    s += `<g class="mpair${cur?' cur':''}" data-m="${i}">`;
+    s += `<rect class="bp" x="${cx-17}" y="${yp}" width="15" height="${hp}" rx="4"></rect>`;
+    s += `<rect class="bf${m.fact===0?' zero':''}" x="${cx+2}" y="${yf}" width="15" height="${hf}" rx="4"></rect>`;
+    if (m.fact>0) s += `<text class="mfv" x="${cx+9.5}" y="${yf-5}">${m.fact}</text>`;
+    s += `<text class="axl" x="${cx}" y="${base+18}" text-anchor="middle">${m.n}</text></g>`;
+  });
+  el('ch-months').innerHTML = s;
+}
 
-/* брак — модал */
-const scrap=document.getElementById('scrapModal');
-document.getElementById('btnScrap').addEventListener('click',()=>{
-  const it=ITEMS[CUR];
-  document.getElementById('sc-name').textContent=it.no+' · '+it.title;
-  document.getElementById('sc-reason').value=ncDefault(it);
-  fillComp('sc-comp', it);
-  document.getElementById('sc-src').value='comp';
-  srcToggle('sc-src','sc-comp-fld','sc-buyer');
-  scrap.hidden=false; document.getElementById('sc-reason').focus();
-});
-document.getElementById('sc-src').addEventListener('change',()=>srcToggle('sc-src','sc-comp-fld','sc-buyer'));
-document.getElementById('sc-cancel').addEventListener('click',()=>scrap.hidden=true);
-scrap.addEventListener('click',e=>{ if(e.target===scrap) scrap.hidden=true; });
-document.getElementById('sc-confirm').addEventListener('click',()=>{
-  const it=ITEMS[CUR];
-  const reason=document.getElementById('sc-reason').value.trim()||'не указана';
-  ACT_N++; const act=`АКТ-0610-${pad2(ACT_N)}`;
-  document.getElementById('s-acts').textContent=ACT_N;
-  const sent=sendPack(it, reason, 'sc-src','sc-comp','sc-buyer','sc-boss',`Брак · ${act}`);
-  log('scrap','scrap','Брак · '+reason+(sent.includes('закупщику')?' · претензия':''));
-  scrap.hidden=true;
-  it.st={checks:it.groups.map(g=>g.items.map(()=>'')), meas:{}};
-  consumeUnit();
-});
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(!scrap.hidden) scrap.hidden=true; if(!escM.hidden) escM.hidden=true; } });
+/* ===== График 3: тренд pass-rate (SVG) ===== */
+function renderPass(p){
+  const idx = PASS_IDX[p], base = 138, plotH = 95;
+  const y = v => base - (v-90)/8*plotH;
+  const left = 46, right = 414;
+  const step = idx.length>1 ? (right-left)/(idx.length-1) : 0;
+  const pts = idx.map((mi,i)=>({x:left+i*step, y:y(MONTHS[mi].pass), m:MONTHS[mi]}));
+  let s = `<polyline class="pline" points="${pts.map(pt=>`${pt.x},${pt.y}`).join(' ')}"></polyline>`;
+  pts.forEach(pt=>{
+    s += `<circle class="pp" cx="${pt.x}" cy="${pt.y}" r="4.5"></circle>`;
+    s += `<text class="pv" x="${pt.x}" y="${pt.y-12}">${pt.m.pass}%</text>`;
+    s += `<text class="axl" x="${pt.x}" y="${base+22}" text-anchor="middle">${pt.m.n}</text>`;
+  });
+  el('ch-pass').innerHTML = s;
+  el('pass-cap').textContent = PASS_CAP[p];
+}
 
-/* ===== Init ===== */
-buildQueue(); renderProto(); buildJrn();
-</script>
-</body></html>
+/* ===== График 4: причины брака (SVG, горизонтальные бары) ===== */
+function renderBrak(p){
+  const rows = BRAK[p];
+  const max = Math.max(...rows.map(r=>r[1]));
+  let s = '';
+  rows.forEach((r,i)=>{
+    const yTop = 10 + i*34;
+    const w = Math.max(8, r[1]/max*200);
+    s += `<text class="brl" x="0" y="${yTop+16}">${r[0]}</text>`;
+    s += `<rect class="brbar" x="180" y="${yTop+5}" width="${w}" height="13" rx="6"></rect>`;
+    s += `<text class="brv" x="${180+w+9}" y="${yTop+16}">${r[1]}</text>`;
+  });
+  el('ch-brak').innerHTML = s;
+  const total = rows.reduce((a,r)=>a+r[1], 0);
+  el('brak-cap').textContent = `${total} ${plu(total,'случай','случая','случаев')}`;
+}
+
+/* ===== График 5: вклад сборщиков (SVG) ===== */
+function renderTeam(p){
+  const rows = TEAM[p];
+  const sum = rows.reduce((a,r)=>a+r[2], 0);
+  const max = Math.max(...rows.map(r=>r[2]));
+  let s = '';
+  rows.forEach((r,i)=>{
+    const yTop = 8 + i*36;
+    const w = Math.max(8, r[2]/max*210);
+    const pct = Math.round(r[2]/sum*100);
+    s += `<text class="tnm" x="0" y="${yTop+17}">${r[0]}</text>`;
+    s += `<rect class="tbar" x="82" y="${yTop+6}" width="${w}" height="14" rx="7" fill="${r[1]}"></rect>`;
+    s += `<text class="tv" x="${82+w+9}" y="${yTop+17}">${fmt(r[2])} н.ч · ${pct}%</text>`;
+  });
+  el('ch-team').innerHTML = s;
+  el('team-cap').textContent = `${fmt(sum)} н.ч суммарно`;
+}
+
+/* ===== Таблица: топ изделий ===== */
+function renderTop(p){
+  const rows = TOP[p];
+  const sum = rows.reduce((a,r)=>a+r[2], 0);
+  el('topbody').innerHTML = rows.map(r=>{
+    const pct = Math.round(r[2]/sum*100);
+    return `<tr><td>${r[0]}</td><td class="r">${money(r[1])}</td><td class="r">${fmt(r[2])}</td>` +
+      `<td class="r"><span class="shr"><span class="b2"><i style="width:${pct}%"></i></span>${pct}%</span></td></tr>`;
+  }).join('');
+  el('top-foot').textContent = `${rows.length} ${plu(rows.length,'позиция','позиции','позиций')}`;
+  el('top-sum').textContent = `${fmt(sum)} н.ч`;
+  el('top-period').textContent = P_LAB[p];
+}
+
+/* ===== Период ===== */
+function setPeriod(p){
+  PERIOD = p;
+  document.querySelectorAll('#seg-period button').forEach(b=>b.classList.toggle('active', b.dataset.p===p));
+  el('pp-lab').textContent = P_LAB[p];
+  el('p-sub').textContent = P_SUB[p];
+  renderKpis(p);
+  renderMonths(p);
+  renderPass(p);
+  renderBrak(p);
+  renderTeam(p);
+  renderTop(p);
+}
+document.querySelectorAll('#seg-period button').forEach(b=>b.addEventListener('click', ()=>setPeriod(b.dataset.p)));
+
+renderDays();
+bindDays();
+renderDayCard(SEL);
+setPeriod('m');
+</script></body></html>
