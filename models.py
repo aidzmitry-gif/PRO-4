@@ -92,3 +92,42 @@ class ProductionQc(Base):
     reason: Mapped[str] = mapped_column(String(255), default="", server_default="")
     inspector: Mapped[str] = mapped_column(String(128), default="", server_default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class ProductionBom(Base):
+    """Спецификация изделия — состав (экран «Спецификации · BOM»).
+
+    ``status``: ``draft`` (черновик) | ``approved`` (утверждена). Правка состава
+    (добавление/изменение/удаление позиции) возвращает спецификацию в черновик.
+    Позиции состава — ``ProductionBomItem`` (по ``bom_id``, без FK-связи).
+    """
+
+    __tablename__ = "production_bom"
+    __table_args__ = {"schema": "production"}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product: Mapped[str] = mapped_column(String(255))
+    version: Mapped[str] = mapped_column(String(16), default="v1", server_default="v1")
+    status: Mapped[str] = mapped_column(String(16), default="draft", server_default="draft")
+    note: Mapped[str] = mapped_column(String(400), default="", server_default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class ProductionBomItem(Base):
+    """Позиция состава спецификации: комплектующее, норма расхода, остаток/резерв.
+
+    Обеспеченность позиции: доступно = ``stock - reserved`` ≥ ``norm_qty`` (на 1 шт).
+    """
+
+    __tablename__ = "production_bom_item"
+    __table_args__ = {"schema": "production"}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    bom_id: Mapped[int] = mapped_column(Integer, index=True)
+    component: Mapped[str] = mapped_column(String(255))
+    norm_qty: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # расход на 1 шт
+    unit: Mapped[str] = mapped_column(String(32), default="шт", server_default="шт")
+    stock: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # на складе
+    reserved: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # в резерве

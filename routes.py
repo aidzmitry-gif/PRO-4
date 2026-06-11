@@ -9,12 +9,21 @@ from core.runtime.core import Core
 from core.runtime.deps import get_core, get_session
 from core.runtime.funnel import FunnelBoardOut, FunnelCard, build_board
 from modules.production.models import (
+    ProductionBom,
+    ProductionBomItem,
     ProductionNorm,
     ProductionOrder,
     ProductionQc,
     ProductionWorker,
 )
 from modules.production.schemas import (
+    BomCreate,
+    BomDetailOut,
+    BomItemCreate,
+    BomItemOut,
+    BomItemUpdate,
+    BomOut,
+    BomUpdate,
     NormCreate,
     NormOut,
     NormUpdate,
@@ -342,3 +351,166 @@ async def qc_stats(session: AsyncSession = Depends(get_session)) -> QcStats:
         total=total,
         pass_rate=round(accepted / total * 100, 1) if total else 0.0,
     )
+
+
+# ===== Спецификации · BOM (составы изделий) =====
+
+
+def _item_status(item: ProductionBomItem) -> str:
+    """Обеспеченность позиции: доступно (склад − резерв) ≥ норма расхода на 1 шт."""
+    return "ok" if (item.stock - item.reserved) >= item.norm_qty else "short"
+
+
+def _coverage(items: list[ProductionBomItem]) -> int:
+    """% обеспеченных позиций состава (нет позиций → 100%)."""
+    if not items:
+        return 100
+    covered = sum(1 for i in items if _item_status(i) == "ok")
+    return round(covered / len(items) * 100)
+
+
+async def _bom_items(session: AsyncSession, bom_id: int) -> list[ProductionBomItem]:
+    return list(
+        (
+            await session.execute(
+                select(ProductionBomItem)
+                .where(ProductionBomItem.bom_id == bom_id)
+                .order_by(ProductionBomItem.id)
+            )
+        ).scalars().all()
+    )
+
+
+def _item_out(item: ProductionBomItem) -> BomItemOut:
+    out = BomItemOut.model_validate(item)
+    out.status = _item_status(item)
+    return out
+
+
+def _bom_out(bom: ProductionBom, items: list[ProductionBomItem]) -> BomOut:
+    out = BomOut.model_validate(bom)
+    out.item_count = len(items)
+    out.coverage = _coverage(items)
+    return out
+
+
+async def _get_bom_or_404(session: AsyncSession, bom_id: int) -> ProductionBom:
+    bom = await session.get(ProductionBom, bom_id)
+    if bom is None:
+        raise HTTPException(status_code=404, detail="Спецификация не найдена")
+    return bom
+
+
+@router.get("/boms", response_model=list[BomOut])
+async def list_boms(session: AsyncSession = Depends(get_session)):
+    """Справочник спецификаций с агрегатами (позиций + обеспеченность)."""
+    boms = (
+        await session.execute(select(ProductionBom).order_by(ProductionBom.product))
+    ).scalars().all()
+    result = []
+    for bom in boms:
+        result.append(_bom_out(bom, await _bom_items(session, bom.id)))
+    return result
+
+
+@router.get("/boms/{bom_id}", response_model=BomDetailOut)
+async def get_bom(bom_id: int, session: AsyncSession = Depends(get_session)) -> BomDetailOut:
+    """Спецификация с раскрытым составом и статусами позиций."""
+    bom = await _get_bom_or_404(session, bom_id)
+    items = await _bom_items(session, bom_id)
+    detail = BomDetailOut.model_validate(bom)
+    detail.item_count = len(items)
+    detail.coverage = _coverage(items)
+    detail.items = [_item_out(i) for i in items]
+    return detail
+
+
+@router.post("/boms", response_model=BomOut, status_code=201)
+async def create_bom(payload: BomCreate, session: AsyncSession = Depends(get_session)):
+    """Создать спецификацию (черновик, без позиций)."""
+    bom = ProductionBom(**payload.model_dump())
+    session.add(bom)
+    await session.commit()
+    await session.refresh(bom)
+    return _bom_out(bom, [])
+
+
+@router.patch("/boms/{bom_id}", response_model=BomOut)
+async def update_bom(
+    bom_id: int, payload: BomUpdate, session: AsyncSession = Depends(get_session)
+):
+    """Правка реквизитов спецификации (изделие/версия/примечание)."""
+    bom = await _get_bom_or_404(session, bom_id)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(bom, field, value)
+    await session.commit()
+    await session.refresh(bom)
+    return _bom_out(bom, await _bom_items(session, bom_id))
+
+
+@router.post("/boms/{bom_id}/approve", response_model=BomOut)
+async def approve_bom(bom_id: int, session: AsyncSession = Depends(get_session)):
+    """Утвердить спецификацию. Пустой состав утвердить нельзя (409)."""
+    bom = await _get_bom_or_404(session, bom_id)
+    items = await _bom_items(session, bom_id)
+    if not items:
+        raise HTTPException(status_code=409, detail="Нельзя утвердить пустую спецификацию")
+    bom.status = "approved"
+    await session.commit()
+    await session.refresh(bom)
+    return _bom_out(bom, items)
+
+
+@router.delete("/boms/{bom_id}", status_code=204)
+async def delete_bom(bom_id: int, session: AsyncSession = Depends(get_session)):
+    """Удалить спецификацию вместе с её составом."""
+    bom = await _get_bom_or_404(session, bom_id)
+    for item in await _bom_items(session, bom_id):
+        await session.delete(item)
+    await session.delete(bom)
+    await session.commit()
+
+
+@router.post("/boms/{bom_id}/items", response_model=BomItemOut, status_code=201)
+async def add_bom_item(
+    bom_id: int, payload: BomItemCreate, session: AsyncSession = Depends(get_session)
+):
+    """Добавить позицию в состав. Правка состава возвращает спецификацию в черновик."""
+    bom = await _get_bom_or_404(session, bom_id)
+    item = ProductionBomItem(bom_id=bom_id, **payload.model_dump())
+    session.add(item)
+    bom.status = "draft"
+    await session.commit()
+    await session.refresh(item)
+    return _item_out(item)
+
+
+@router.patch("/bom-items/{item_id}", response_model=BomItemOut)
+async def update_bom_item(
+    item_id: int, payload: BomItemUpdate, session: AsyncSession = Depends(get_session)
+):
+    """Правка позиции состава (возвращает спецификацию в черновик)."""
+    item = await session.get(ProductionBomItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Позиция состава не найдена")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(item, field, value)
+    bom = await session.get(ProductionBom, item.bom_id)
+    if bom is not None:
+        bom.status = "draft"
+    await session.commit()
+    await session.refresh(item)
+    return _item_out(item)
+
+
+@router.delete("/bom-items/{item_id}", status_code=204)
+async def delete_bom_item(item_id: int, session: AsyncSession = Depends(get_session)):
+    """Удалить позицию состава (возвращает спецификацию в черновик)."""
+    item = await session.get(ProductionBomItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Позиция состава не найдена")
+    bom = await session.get(ProductionBom, item.bom_id)
+    if bom is not None:
+        bom.status = "draft"
+    await session.delete(item)
+    await session.commit()

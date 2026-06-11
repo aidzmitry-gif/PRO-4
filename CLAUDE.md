@@ -54,6 +54,12 @@
 - `production.production_qc` (`ProductionQc`) — журнал ОТК (экран «ОТК · контроль качества»):
   - `id` (PK), `order_code` (str), `product` (str), `decision` (str: `accept`|`rework`|`scrap`), `reason` (str), `inspector` (str), `created_at`
   - Брак (`scrap`) публикует событие `production.scrap` → претензия в закупки.
+- `production.production_bom` (`ProductionBom`) — спецификация (экран «Спецификации · BOM»):
+  - `id` (PK), `product` (str), `version` (str="v1"), `status` (str: `draft`|`approved`), `note`, `updated_at`
+  - Правка состава возвращает в `draft`; утвердить пустой состав нельзя (409). Обеспеченность/кол-во позиций — агрегаты на чтении.
+- `production.production_bom_item` (`ProductionBomItem`) — позиция состава:
+  - `id` (PK), `bom_id` (int, индекс, без FK), `component` (str), `norm_qty` (float, расход на 1 шт), `unit` (str="шт"), `stock` (float), `reserved` (float)
+  - Статус позиции: `ok` если `stock − reserved ≥ norm_qty`, иначе `short`.
 
 ## API-эндпоинты (ключевые)
 - `GET /production/orders` — плоский список нарядов (для аналитики/совместимости), сортировка по `id desc`
@@ -64,6 +70,8 @@
 - `PATCH /production/norms/{id}` — правка (смена nh → `pending`); `POST /production/norms/{id}/approve` — утвердить (409 при nh=0); `DELETE /production/norms/{id}` — 204
 - `GET/POST /production/workers`, `PATCH /production/workers/{id}` — табель сборщиков; `GET /production/payroll` — расчёт ЗП по строкам (base/premium/total) + рейтинг вклада + итоги цеха
 - `POST /production/qc/decisions` — решение ОТК (`accept`|`rework`|`scrap`; 422 на иное); `scrap` emit `production.scrap`. `GET /production/qc/decisions` — журнал; `GET /production/qc/stats` — accepted/rework/scrap + pass-rate
+- `GET /production/boms` — список спецификаций (с `item_count`/`coverage`); `GET /production/boms/{id}` — состав с per-item `status` (ok/short). `POST /boms`, `PATCH /boms/{id}` (реквизиты, не сбрасывает статус), `POST /boms/{id}/approve` (409 на пустом), `DELETE /boms/{id}` (каскадом по позициям)
+- `POST /production/boms/{id}/items`, `PATCH /production/bom-items/{id}`, `DELETE /production/bom-items/{id}` — состав; любая правка состава → `draft`
 
 ## Межмодульные связи и зависимости
 - Из ядра: `core.runtime.{contract,core,deps,funnel}`, `core.db.base.Base`.

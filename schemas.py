@@ -136,3 +136,67 @@ class QcStats(BaseModel):
     scrap: int
     total: int
     pass_rate: float  # принято / всего, %
+
+
+# ===== Спецификации · BOM =====
+
+
+class BomCreate(BaseModel):
+    product: str
+    version: str = "v1"
+    note: str = ""
+
+
+class BomUpdate(BaseModel):
+    product: str | None = None
+    version: str | None = None
+    note: str | None = None
+
+
+class BomItemCreate(BaseModel):
+    component: str
+    norm_qty: float = 0.0
+    unit: str = "шт"
+    stock: float = 0.0
+    reserved: float = 0.0
+
+
+class BomItemUpdate(BaseModel):
+    component: str | None = None
+    norm_qty: float | None = None
+    unit: str | None = None
+    stock: float | None = None
+    reserved: float | None = None
+
+
+class BomItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    bom_id: int
+    component: str
+    norm_qty: float
+    unit: str
+    stock: float
+    reserved: float
+    status: str = "ok"  # ok | short — вычисляется (доступно ≥ норма)
+
+
+class BomOut(BaseModel):
+    """Строка списка спецификаций (без позиций) + агрегаты обеспеченности."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    product: str
+    version: str
+    status: str
+    note: str = ""
+    item_count: int = 0       # позиций в составе
+    coverage: int = 100       # % обеспеченных позиций
+
+
+class BomDetailOut(BomOut):
+    """Спецификация с раскрытым составом."""
+
+    items: list[BomItemOut] = []
