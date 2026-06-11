@@ -8,14 +8,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.runtime.core import Core
 from core.runtime.deps import get_core, get_session
 from core.runtime.funnel import FunnelBoardOut, FunnelCard, build_board
-from modules.production.models import ProductionNorm, ProductionOrder
+from modules.production.models import (
+    ProductionNorm,
+    ProductionOrder,
+    ProductionQc,
+    ProductionWorker,
+)
 from modules.production.schemas import (
     NormCreate,
     NormOut,
     NormUpdate,
+    PayrollOut,
+    PayrollRow,
     ProductionOrderCreate,
     ProductionOrderOut,
+    QcDecisionIn,
+    QcOut,
+    QcStats,
     StageUpdate,
+    WorkerCreate,
+    WorkerOut,
+    WorkerUpdate,
 )
 from modules.production.stages import STAGES
 
@@ -23,6 +36,15 @@ router = APIRouter(tags=["production"])
 
 # Переход в эту стадию = наряд готов → приход на склад (production → wms).
 COMPLETED_STAGE = "done"
+
+# Экономика нормо-часа (BYN): ставка работы и премия сборщику за 1 н.ч; норма дней в месяце.
+WORK_RATE = 25.0
+PREMIUM_RATE = 6.25
+NORM_DAYS = 22
+
+# Решения ОТК. Брак (scrap) публикует претензию в закупки.
+QC_DECISIONS = ("accept", "rework", "scrap")
+SCRAP_DECISION = "scrap"
 
 
 def _nh_fmt(value: float) -> str:
@@ -191,3 +213,132 @@ async def delete_norm(norm_id: int, session: AsyncSession = Depends(get_session)
         raise HTTPException(status_code=404, detail="Норма не найдена")
     await session.delete(obj)
     await session.commit()
+
+
+# ===== Выработка и оценка (табель + расчёт ЗП) =====
+
+
+def _round2(value: float) -> float:
+    return round(value, 2)
+
+
+def _payroll_row(w: ProductionWorker) -> PayrollRow:
+    """Расчёт ЗП по строке табеля: оклад × дни/22 + выработка × премия."""
+    base = w.salary * w.days_worked / NORM_DAYS if NORM_DAYS else 0.0
+    premium = w.nh_output * PREMIUM_RATE
+    return PayrollRow(
+        id=w.id,
+        name=w.name,
+        nh_output=w.nh_output,
+        base=_round2(base),
+        premium=_round2(premium),
+        total=_round2(base + premium),
+        contribution=_round2(w.nh_output * WORK_RATE),
+    )
+
+
+@router.get("/workers", response_model=list[WorkerOut])
+async def list_workers(session: AsyncSession = Depends(get_session)):
+    """Табель сборщиков (для экрана «Выработка и оценка»)."""
+    return (
+        await session.execute(select(ProductionWorker).order_by(ProductionWorker.id))
+    ).scalars().all()
+
+
+@router.post("/workers", response_model=WorkerOut, status_code=201)
+async def create_worker(payload: WorkerCreate, session: AsyncSession = Depends(get_session)):
+    """Добавить сборщика в табель."""
+    obj = ProductionWorker(**payload.model_dump())
+    session.add(obj)
+    await session.commit()
+    await session.refresh(obj)
+    return obj
+
+
+@router.patch("/workers/{worker_id}", response_model=WorkerOut)
+async def update_worker(
+    worker_id: int, payload: WorkerUpdate, session: AsyncSession = Depends(get_session)
+):
+    """Правка строки табеля (дни/выработка/оклад)."""
+    obj = await session.get(ProductionWorker, worker_id)
+    if obj is None:
+        raise HTTPException(status_code=404, detail="Сборщик не найден")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(obj, field, value)
+    await session.commit()
+    await session.refresh(obj)
+    return obj
+
+
+@router.get("/payroll", response_model=PayrollOut)
+async def payroll(session: AsyncSession = Depends(get_session)) -> PayrollOut:
+    """Расчёт ЗП по табелю + рейтинг вклада (лидеры по стоимости выработки первыми)."""
+    workers = (
+        await session.execute(select(ProductionWorker))
+    ).scalars().all()
+    rows = sorted((_payroll_row(w) for w in workers), key=lambda r: r.contribution, reverse=True)
+    return PayrollOut(
+        rows=rows,
+        total_nh=_round2(sum(r.nh_output for r in rows)),
+        total_base=_round2(sum(r.base for r in rows)),
+        total_premium=_round2(sum(r.premium for r in rows)),
+        total_payroll=_round2(sum(r.total for r in rows)),
+    )
+
+
+# ===== ОТК · контроль качества =====
+
+
+@router.get("/qc/decisions", response_model=list[QcOut])
+async def list_qc(session: AsyncSession = Depends(get_session)):
+    """Журнал решений ОТК (последние — первыми)."""
+    return (
+        await session.execute(select(ProductionQc).order_by(ProductionQc.id.desc()))
+    ).scalars().all()
+
+
+@router.post("/qc/decisions", response_model=QcOut, status_code=201)
+async def create_qc(
+    payload: QcDecisionIn,
+    core: Core = Depends(get_core),
+    session: AsyncSession = Depends(get_session),
+):
+    """Зафиксировать решение ОТК. Брак (``scrap``) → претензия в закупки."""
+    if payload.decision not in QC_DECISIONS:
+        raise HTTPException(
+            status_code=422, detail=f"Решение должно быть одним из {QC_DECISIONS}"
+        )
+    obj = ProductionQc(**payload.model_dump())
+    session.add(obj)
+    await session.flush()
+    if obj.decision == SCRAP_DECISION:
+        core.event_bus.emit(
+            session,
+            "production.scrap",
+            {
+                "item": obj.product,
+                "reason": obj.reason,
+                "order_code": obj.order_code,
+                "entity_ref": f"production:qc:{obj.id}",
+            },
+        )
+    await session.commit()
+    await session.refresh(obj)
+    return obj
+
+
+@router.get("/qc/stats", response_model=QcStats)
+async def qc_stats(session: AsyncSession = Depends(get_session)) -> QcStats:
+    """Сводка ОТК за всё время: принято/доработка/брак и pass-rate."""
+    rows = (await session.execute(select(ProductionQc))).scalars().all()
+    accepted = sum(1 for r in rows if r.decision == "accept")
+    rework = sum(1 for r in rows if r.decision == "rework")
+    scrap = sum(1 for r in rows if r.decision == "scrap")
+    total = len(rows)
+    return QcStats(
+        accepted=accepted,
+        rework=rework,
+        scrap=scrap,
+        total=total,
+        pass_rate=round(accepted / total * 100, 1) if total else 0.0,
+    )

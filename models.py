@@ -56,3 +56,39 @@ class ProductionNorm(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+
+class ProductionWorker(Base):
+    """Сборщик в табеле выработки (экран «Выработка и оценка»).
+
+    ЗП = оклад × отработанные дни / 22 + выработка (н.ч) × премиальная ставка.
+    Нормо-час — база начисления премии.
+    """
+
+    __tablename__ = "production_worker"
+    __table_args__ = {"schema": "production"}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(128))
+    salary: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # оклад BYN/мес
+    days_worked: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # дни в периоде
+    nh_output: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # выработка н.ч
+
+
+class ProductionQc(Base):
+    """Решение ОТК по единице/партии (экран «ОТК · контроль качества»).
+
+    ``decision``: ``accept`` (принять) | ``rework`` (доработка) | ``scrap`` (брак).
+    Брак публикует ``production.scrap`` → претензия в закупки (production → procurement).
+    """
+
+    __tablename__ = "production_qc"
+    __table_args__ = {"schema": "production"}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_code: Mapped[str] = mapped_column(String(64), default="", server_default="")
+    product: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    decision: Mapped[str] = mapped_column(String(16))  # accept | rework | scrap
+    reason: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    inspector: Mapped[str] = mapped_column(String(128), default="", server_default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

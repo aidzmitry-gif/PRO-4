@@ -61,3 +61,78 @@ class NormOut(BaseModel):
     nh: float
     status: str
     note: str = ""
+
+
+# ===== Выработка и оценка =====
+
+
+class WorkerCreate(BaseModel):
+    name: str
+    salary: float = 0.0
+    days_worked: int = 0
+    nh_output: float = 0.0
+
+
+class WorkerUpdate(BaseModel):
+    name: str | None = None
+    salary: float | None = None
+    days_worked: int | None = None
+    nh_output: float | None = None
+
+
+class WorkerOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    salary: float
+    days_worked: int
+    nh_output: float
+
+
+class PayrollRow(BaseModel):
+    id: int
+    name: str
+    nh_output: float
+    base: float       # оклад × дни / 22
+    premium: float    # выработка × премиальная ставка
+    total: float      # base + premium
+    contribution: float  # стоимость выработки (для рейтинга вклада)
+
+
+class PayrollOut(BaseModel):
+    rows: list[PayrollRow]          # отсортированы по вкладу (лидеры первыми)
+    total_nh: float
+    total_base: float
+    total_premium: float
+    total_payroll: float
+
+
+# ===== ОТК =====
+
+
+class QcDecisionIn(BaseModel):
+    decision: str  # accept | rework | scrap
+    order_code: str = ""
+    product: str = ""
+    reason: str = ""
+    inspector: str = ""
+
+
+class QcOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    order_code: str
+    product: str
+    decision: str
+    reason: str
+    inspector: str
+
+
+class QcStats(BaseModel):
+    accepted: int
+    rework: int
+    scrap: int
+    total: int
+    pass_rate: float  # принято / всего, %
