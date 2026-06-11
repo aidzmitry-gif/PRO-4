@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, func
+from sqlalchemy import DateTime, Float, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.db.base import Base
@@ -14,6 +14,8 @@ class ProductionOrder(Base):
 
     Этап (`stage`) ведёт наряд от очереди до готовности (см. ``stages.py``).
     Переход в «Готово → склад» (``done``) публикует ``production.completed`` → приход на склад.
+    Нормо-час — базовая единица учёта: ``nh_per_unit`` берётся из утверждённой
+    нормы справочника (`ProductionNorm`), если не задан явно.
     """
 
     __tablename__ = "production_order"
@@ -29,4 +31,28 @@ class ProductionOrder(Base):
     stage: Mapped[str] = mapped_column(String(32), default="queue", server_default="queue")
     due_date: Mapped[str | None] = mapped_column(String(32))
     insight: Mapped[str] = mapped_column(String(400), default="", server_default="")
+    nh_per_unit: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # н.ч/шт
+    made_qty: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # сделано шт
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class ProductionNorm(Base):
+    """Норма нормо-часов на изделие или операцию (экран «Нормы и нормативы»).
+
+    Жизненный цикл статуса: ``none`` (нет нормы, nh=0) → ``pending`` (на
+    утверждении — при создании/правке nh>0) → ``approved`` (утверждена).
+    Любая правка ``nh`` возвращает норму на утверждение.
+    """
+
+    __tablename__ = "production_norm"
+    __table_args__ = {"schema": "production"}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), default="product", server_default="product")
+    title: Mapped[str] = mapped_column(String(255))
+    nh: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # нормо-часы
+    status: Mapped[str] = mapped_column(String(16), default="none", server_default="none")
+    note: Mapped[str] = mapped_column(String(400), default="", server_default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
