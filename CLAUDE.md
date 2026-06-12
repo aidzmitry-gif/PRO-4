@@ -60,6 +60,12 @@
 - `production.production_bom_item` (`ProductionBomItem`) — позиция состава:
   - `id` (PK), `bom_id` (int, индекс, без FK), `component` (str), `norm_qty` (float, расход на 1 шт), `unit` (str="шт"), `stock` (float), `reserved` (float)
   - Статус позиции: `ok` если `stock − reserved ≥ norm_qty`, иначе `short`.
+- `production.production_plan` (`ProductionPlan`) — план по месяцам (экран «Планирование · план/факт»):
+  - `id` (PK), `year` (int, индекс), `product` (str = `ProductionOrder.product`/`ProductionNorm.title`), `month` (int 1..12), `plan_qty` (int), `updated_at`
+  - **Длинный формат**: одна строка = ячейка (`year×product×month`), уникальность `(year, product, month)`.
+  - Норма н.ч/шт и **факт здесь НЕ хранятся**: норма — из утверждённой `ProductionNorm` (точный `title`) на чтении,
+    факт — из завершённых нарядов (`completed_at`→fallback `created_at`). Мощность = `worker_count × 176` (`ASSEMBLER_HOURS_PER_MONTH`).
+- `ProductionOrder.completed_at` (datetime|None) — дата перехода в `done`; по ней факт раскладывается по месяцам.
 
 ## API-эндпоинты (ключевые)
 - `GET /production/orders` — плоский список нарядов (для аналитики/совместимости), сортировка по `id desc`
@@ -72,6 +78,9 @@
 - `POST /production/qc/decisions` — решение ОТК (`accept`|`rework`|`scrap`; 422 на иное); `scrap` emit `production.scrap`. `GET /production/qc/decisions` — журнал; `GET /production/qc/stats` — accepted/rework/scrap + pass-rate
 - `GET /production/boms` — список спецификаций (с `item_count`/`coverage`); `GET /production/boms/{id}` — состав с per-item `status` (ok/short). `POST /boms`, `PATCH /boms/{id}` (реквизиты, не сбрасывает статус), `POST /boms/{id}/approve` (409 на пустом), `DELETE /boms/{id}` (каскадом по позициям)
 - `POST /production/boms/{id}/items`, `PATCH /production/bom-items/{id}`, `DELETE /production/bom-items/{id}` — состав; любая правка состава → `draft`
+- `GET /production/plan?year=` — матрица плана/факта за год (`PlanBoardOut`: rows по изделиям + totals month_nh/fact_nh/load_pct + capacity_nh + plan_ytd/fact_ytd/peak/low); год по умолчанию — текущий
+- `PUT /production/plan/cell` — upsert одной ячейки (год×изделие×месяц), возвращает пересчитанный board; `POST /production/plan/position` (201) — задать позицию на год (12 qty); `DELETE /production/plan/position?year=&product=` (204)
+- `GET /production/analytics?year=` — read-model (`AnalyticsOut`): KPI (выработка факт/план YTD, эффективность=выработка÷табель·8ч, FPY=accept÷всего, pass-rate=(accept+rework)÷всего, брак %, ФОТ-премия) + серии (план/факт по месяцам, причины брака, вклад сборщиков, топ изделий). Своих таблиц нет.
 
 ## Межмодульные связи и зависимости
 - Из ядра: `core.runtime.{contract,core,deps,funnel}`, `core.db.base.Base`.

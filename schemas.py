@@ -1,7 +1,7 @@
 """Pydantic-схемы модуля Production."""
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductionOrderCreate(BaseModel):
@@ -200,3 +200,76 @@ class BomDetailOut(BomOut):
     """Спецификация с раскрытым составом."""
 
     items: list[BomItemOut] = []
+
+
+# ===== Планирование · план/факт =====
+
+
+class PlanCellUpdate(BaseModel):
+    """Изменение одной ячейки плана (год × изделие × месяц)."""
+
+    year: int
+    product: str
+    month: int = Field(ge=1, le=12)
+    plan_qty: int = Field(ge=0)
+
+
+class PlanPositionUpsert(BaseModel):
+    """Создать/заменить позицию плана на год целиком (12 значений qty, янв..дек)."""
+
+    year: int
+    product: str
+    monthly: list[int] = Field(min_length=12, max_length=12)
+
+
+class PlanMonthCell(BaseModel):
+    month: int           # 1..12
+    plan_qty: int
+    plan_nh: float       # plan_qty × norm_nh
+    fact_qty: int        # из завершённых нарядов этого месяца
+    fact_nh: float       # fact_qty × norm_nh
+
+
+class PlanRowOut(BaseModel):
+    product: str
+    norm_nh: float       # н.ч/шт из утверждённой нормы (0 если нет)
+    months: list[PlanMonthCell]  # 12
+    year_qty: int
+    year_nh: float
+
+
+class PlanTotalsOut(BaseModel):
+    month_nh: list[float]   # план н.ч по месяцам (12)
+    fact_nh: list[float]    # факт н.ч по месяцам (12)
+    load_pct: list[float]   # month_nh / capacity_nh × 100 (12)
+    year_nh: float
+    plan_ytd: float         # план н.ч с начала года по текущий месяц включ.
+    fact_ytd: float         # факт н.ч YTD
+    peak_month: int         # индекс 0..11 макс. загрузки
+    low_month: int          # индекс 0..11 мин. загрузки
+
+
+class PlanBoardOut(BaseModel):
+    year: int
+    capacity_nh: float      # мощность цеха, н.ч/мес
+    rows: list[PlanRowOut]
+    totals: PlanTotalsOut
+
+
+# ===== Аналитика производства (read-model) =====
+
+
+class AnalyticsOut(BaseModel):
+    # KPI
+    vyrabotka_fact_nh: float    # Σ fact_nh за год — выработка факт
+    vyrabotka_plan_nh: float    # Σ plan_nh YTD — план периода
+    efficiency_pct: float       # выработка н.ч ÷ (Σ days_worked × 8 ч) × 100
+    fpy_pct: float              # accept ÷ всего × 100 (с первого предъявления)
+    pass_rate_pct: float        # (accept + rework) ÷ всего × 100
+    scrap_pct: float            # scrap ÷ всего × 100
+    premium_fot_byn: float      # Σ (nh_output × премиальная ставка) по табелю
+    # Серии для графиков
+    plan_fact_by_month: list[dict]   # [{month, plan_nh, fact_nh}] ×12
+    scrap_reasons: list[dict]        # [{reason, count}] desc
+    team_contribution: list[dict]    # [{name, nh_output, share_pct}] desc
+    top_products: list[dict]         # [{product, fact_nh}] desc

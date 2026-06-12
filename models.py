@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, Integer, String, func
+from sqlalchemy import DateTime, Float, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.db.base import Base
@@ -34,6 +34,7 @@ class ProductionOrder(Base):
     nh_per_unit: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # н.ч/шт
     made_qty: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # сделано шт
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)  # дата перехода в done (факт по месяцам)
 
 
 class ProductionNorm(Base):
@@ -131,3 +132,28 @@ class ProductionBomItem(Base):
     unit: Mapped[str] = mapped_column(String(32), default="шт", server_default="шт")
     stock: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # на складе
     reserved: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")  # в резерве
+
+
+class ProductionPlan(Base):
+    """План производства: сколько штук изделия в месяце года (экран «Планирование · план/факт»).
+
+    Длинный формат — одна строка = одна ячейка матрицы (``year`` × ``product`` × ``month``).
+    Уникальность ячейки — ``(year, product, month)``. Норма н.ч/шт здесь НЕ хранится —
+    берётся из утверждённой ``ProductionNorm`` по ``product`` на чтении. Факт тоже не хранится —
+    выводится из завершённых нарядов (``ProductionOrder.completed_at``).
+    """
+
+    __tablename__ = "production_plan"
+    __table_args__ = (
+        UniqueConstraint("year", "product", "month", name="uq_production_plan_cell"),
+        {"schema": "production"},
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    year: Mapped[int] = mapped_column(Integer, index=True)
+    product: Mapped[str] = mapped_column(String(255))  # = ProductionOrder.product / ProductionNorm.title
+    month: Mapped[int] = mapped_column(Integer)  # 1..12
+    plan_qty: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

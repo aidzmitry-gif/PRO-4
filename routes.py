@@ -1,8 +1,10 @@
 """HTTP-API модуля Production. Монтируется под префиксом ``/production``."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.runtime.core import Core
@@ -13,10 +15,12 @@ from modules.production.models import (
     ProductionBomItem,
     ProductionNorm,
     ProductionOrder,
+    ProductionPlan,
     ProductionQc,
     ProductionWorker,
 )
 from modules.production.schemas import (
+    AnalyticsOut,
     BomCreate,
     BomDetailOut,
     BomItemCreate,
@@ -29,6 +33,12 @@ from modules.production.schemas import (
     NormUpdate,
     PayrollOut,
     PayrollRow,
+    PlanBoardOut,
+    PlanCellUpdate,
+    PlanMonthCell,
+    PlanPositionUpsert,
+    PlanRowOut,
+    PlanTotalsOut,
     ProductionOrderCreate,
     ProductionOrderOut,
     QcDecisionIn,
@@ -50,6 +60,15 @@ COMPLETED_STAGE = "done"
 WORK_RATE = 25.0
 PREMIUM_RATE = 6.25
 NORM_DAYS = 22
+
+# Мощность цеха: рабочих часов в месяце на одного сборщика (4 сборщика × 176 = 704 н.ч/мес).
+ASSEMBLER_HOURS_PER_MONTH = 176
+
+
+def _utcnow() -> datetime:
+    """Наивный UTC-таймстамп (как в sales/approvals) — для хранения в DateTime-колонках."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 
 # Решения ОТК. Брак (scrap) публикует претензию в закупки.
 QC_DECISIONS = ("accept", "rework", "scrap")
@@ -140,6 +159,7 @@ async def update_order(
     if payload.stage == COMPLETED_STAGE:
         obj.progress = 100
         obj.made_qty = obj.qty
+        obj.completed_at = _utcnow()  # дата факта (для плана/факта по месяцам)
         core.event_bus.emit(
             session,
             "production.completed",
@@ -514,3 +534,225 @@ async def delete_bom_item(item_id: int, session: AsyncSession = Depends(get_sess
         bom.status = "draft"
     await session.delete(item)
     await session.commit()
+
+
+# ===== Планирование · план/факт =====
+
+
+async def _approved_norm_map(session: AsyncSession) -> dict[str, float]:
+    """{название изделия → н.ч/шт} по утверждённым нормам (точное совпадение title)."""
+    norms = (
+        await session.execute(
+            select(ProductionNorm).where(
+                ProductionNorm.kind == "product", ProductionNorm.status == "approved"
+            )
+        )
+    ).scalars().all()
+    return {n.title: n.nh for n in norms}
+
+
+def _ytd_month(year: int) -> int:
+    """Сколько месяцев года считать «до текущего» (включительно) для YTD-сумм."""
+    now = _utcnow()
+    if year < now.year:
+        return 12
+    if year > now.year:
+        return 0
+    return now.month
+
+
+async def _build_plan_board(session: AsyncSession, year: int) -> PlanBoardOut:
+    """Собрать матрицу плана/факта за год: план — из ``production_plan``, факт — из
+    завершённых нарядов (``completed_at``→fallback ``created_at``), норма — из справочника."""
+    plan_rows = (
+        await session.execute(select(ProductionPlan).where(ProductionPlan.year == year))
+    ).scalars().all()
+    orders = (await session.execute(select(ProductionOrder))).scalars().all()
+    worker_count = await session.scalar(select(func.count()).select_from(ProductionWorker)) or 0
+    norm_map = await _approved_norm_map(session)
+
+    plan_pm: dict[str, list[int]] = {}   # изделие → план qty по месяцам (12)
+    for p in plan_rows:
+        if 1 <= p.month <= 12:
+            plan_pm.setdefault(p.product, [0] * 12)[p.month - 1] = p.plan_qty
+
+    fact_pm: dict[str, list[int]] = {}   # изделие → факт qty по месяцам (12)
+    for o in orders:
+        if o.stage != COMPLETED_STAGE:
+            continue
+        date = o.completed_at or o.created_at
+        if date is None or date.year != year:
+            continue
+        fact_pm.setdefault(o.product, [0] * 12)[date.month - 1] += o.made_qty
+
+    rows: list[PlanRowOut] = []
+    for product in sorted(set(plan_pm) | set(fact_pm)):
+        plan_arr = plan_pm.get(product, [0] * 12)
+        fact_arr = fact_pm.get(product, [0] * 12)
+        norm_nh = norm_map.get(product, 0.0)
+        months = [
+            PlanMonthCell(
+                month=m + 1,
+                plan_qty=plan_arr[m],
+                plan_nh=round(plan_arr[m] * norm_nh, 2),
+                fact_qty=fact_arr[m],
+                fact_nh=round(fact_arr[m] * norm_nh, 2),
+            )
+            for m in range(12)
+        ]
+        rows.append(
+            PlanRowOut(
+                product=product,
+                norm_nh=norm_nh,
+                months=months,
+                year_qty=sum(plan_arr),
+                year_nh=round(sum(c.plan_nh for c in months), 2),
+            )
+        )
+
+    month_nh = [round(sum(r.months[m].plan_nh for r in rows), 2) for m in range(12)]
+    fact_nh = [round(sum(r.months[m].fact_nh for r in rows), 2) for m in range(12)]
+    capacity_nh = float(max(1, worker_count) * ASSEMBLER_HOURS_PER_MONTH)
+    load_pct = [round(month_nh[m] / capacity_nh * 100, 1) for m in range(12)]
+    cur = _ytd_month(year)
+    totals = PlanTotalsOut(
+        month_nh=month_nh,
+        fact_nh=fact_nh,
+        load_pct=load_pct,
+        year_nh=round(sum(month_nh), 2),
+        plan_ytd=round(sum(month_nh[:cur]), 2),
+        fact_ytd=round(sum(fact_nh[:cur]), 2),
+        peak_month=max(range(12), key=lambda m: load_pct[m]),
+        low_month=min(range(12), key=lambda m: load_pct[m]),
+    )
+    return PlanBoardOut(year=year, capacity_nh=capacity_nh, rows=rows, totals=totals)
+
+
+async def _upsert_plan_cell(
+    session: AsyncSession, year: int, product: str, month: int, plan_qty: int
+) -> None:
+    obj = (
+        await session.execute(
+            select(ProductionPlan).where(
+                ProductionPlan.year == year,
+                ProductionPlan.product == product,
+                ProductionPlan.month == month,
+            )
+        )
+    ).scalar_one_or_none()
+    if obj is None:
+        session.add(ProductionPlan(year=year, product=product, month=month, plan_qty=plan_qty))
+    else:
+        obj.plan_qty = plan_qty
+
+
+@router.get("/plan", response_model=PlanBoardOut)
+async def plan_board(year: int | None = None, session: AsyncSession = Depends(get_session)):
+    """Матрица плана/факта за год (по умолчанию — текущий): позиции, итоги, загрузка мощности."""
+    return await _build_plan_board(session, year or _utcnow().year)
+
+
+@router.put("/plan/cell", response_model=PlanBoardOut)
+async def update_plan_cell(payload: PlanCellUpdate, session: AsyncSession = Depends(get_session)):
+    """Изменить план одной ячейки (год × изделие × месяц). Возвращает пересчитанную матрицу."""
+    await _upsert_plan_cell(session, payload.year, payload.product, payload.month, payload.plan_qty)
+    await session.commit()
+    return await _build_plan_board(session, payload.year)
+
+
+@router.post("/plan/position", response_model=PlanBoardOut, status_code=201)
+async def upsert_plan_position(
+    payload: PlanPositionUpsert, session: AsyncSession = Depends(get_session)
+):
+    """Создать/заменить позицию плана на год целиком (12 значений qty)."""
+    for month, qty in enumerate(payload.monthly, start=1):
+        await _upsert_plan_cell(session, payload.year, payload.product, month, qty)
+    await session.commit()
+    return await _build_plan_board(session, payload.year)
+
+
+@router.delete("/plan/position", status_code=204)
+async def delete_plan_position(
+    year: int, product: str, session: AsyncSession = Depends(get_session)
+):
+    """Удалить позицию из плана (все 12 ячеек года)."""
+    rows = (
+        await session.execute(
+            select(ProductionPlan).where(
+                ProductionPlan.year == year, ProductionPlan.product == product
+            )
+        )
+    ).scalars().all()
+    for row in rows:
+        await session.delete(row)
+    await session.commit()
+
+
+# ===== Аналитика производства (read-model, без своих таблиц) =====
+
+
+@router.get("/analytics", response_model=AnalyticsOut)
+async def analytics(year: int | None = None, session: AsyncSession = Depends(get_session)):
+    """Сводная аналитика цеха: KPI (выработка/эффективность/FPY/брак/ФОТ) + серии для графиков.
+
+    Чистый read-model: агрегирует наряды, ОТК, табель и план — своих данных не хранит.
+    """
+    year = year or _utcnow().year
+    board = await _build_plan_board(session, year)
+    totals = board.totals
+
+    qc = (await session.execute(select(ProductionQc))).scalars().all()
+    accept = sum(1 for r in qc if r.decision == "accept")
+    rework = sum(1 for r in qc if r.decision == "rework")
+    scrap = sum(1 for r in qc if r.decision == "scrap")
+    total = len(qc)
+    reasons: dict[str, int] = {}
+    for r in qc:
+        if r.decision == SCRAP_DECISION:
+            reasons[r.reason or "—"] = reasons.get(r.reason or "—", 0) + 1
+
+    workers = (await session.execute(select(ProductionWorker))).scalars().all()
+    total_output = sum(w.nh_output for w in workers)
+    total_hours = sum(w.days_worked * 8 for w in workers)
+
+    return AnalyticsOut(
+        vyrabotka_fact_nh=round(sum(totals.fact_nh), 2),
+        vyrabotka_plan_nh=totals.plan_ytd,
+        efficiency_pct=round(total_output / total_hours * 100, 1) if total_hours else 0.0,
+        fpy_pct=round(accept / total * 100, 1) if total else 0.0,
+        pass_rate_pct=round((accept + rework) / total * 100, 1) if total else 0.0,
+        scrap_pct=round(scrap / total * 100, 1) if total else 0.0,
+        premium_fot_byn=round(sum(w.nh_output * PREMIUM_RATE for w in workers), 2),
+        plan_fact_by_month=[
+            {"month": m + 1, "plan_nh": totals.month_nh[m], "fact_nh": totals.fact_nh[m]}
+            for m in range(12)
+        ],
+        scrap_reasons=sorted(
+            ({"reason": k, "count": v} for k, v in reasons.items()),
+            key=lambda x: x["count"],
+            reverse=True,
+        ),
+        team_contribution=sorted(
+            (
+                {
+                    "name": w.name,
+                    "nh_output": w.nh_output,
+                    "share_pct": round(w.nh_output / total_output * 100, 1)
+                    if total_output
+                    else 0.0,
+                }
+                for w in workers
+            ),
+            key=lambda x: x["nh_output"],
+            reverse=True,
+        ),
+        top_products=[
+            {"product": r.product, "fact_nh": round(sum(c.fact_nh for c in r.months), 2)}
+            for r in sorted(
+                board.rows,
+                key=lambda r: sum(c.fact_nh for c in r.months),
+                reverse=True,
+            )
+            if sum(c.fact_nh for c in r.months) > 0
+        ][:10],
+    )
