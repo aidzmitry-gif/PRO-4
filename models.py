@@ -154,6 +154,10 @@ class ProductionPlan(Base):
     product: Mapped[str] = mapped_column(String(255))  # = ProductionOrder.product / ProductionNorm.title
     month: Mapped[int] = mapped_column(Integer)  # 1..12
     plan_qty: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Событийная привязка (миграция 0080): план, заведённый из sales.deal.handoff.
+    # deal_id — ключ идемпотентности повторного handoff; source_event — имя события-источника.
+    deal_id: Mapped[int | None] = mapped_column(Integer, index=True)
+    source_event: Mapped[str | None] = mapped_column(String(128))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
