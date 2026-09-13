@@ -101,6 +101,7 @@ def _to_card(r: ProductionOrder) -> FunnelCard:
 @router.get("/orders", response_model=list[ProductionOrderOut])
 async def list_orders(session: AsyncSession = Depends(get_session)):
     """Производственные наряды (плоский список — для аналитики и совместимости)."""
+    await require_legacy_unowned_book(session)
     return (
         await session.execute(select(ProductionOrder).order_by(ProductionOrder.id.desc()))
     ).scalars().all()
@@ -109,6 +110,7 @@ async def list_orders(session: AsyncSession = Depends(get_session)):
 @router.get("/board", response_model=FunnelBoardOut)
 async def board(session: AsyncSession = Depends(get_session)) -> FunnelBoardOut:
     """Канбан цеха: наряды сгруппированы по этапам производства."""
+    await require_legacy_unowned_book(session)
     rows = (await session.execute(select(ProductionOrder))).scalars().all()
     return build_board(STAGES, rows, _to_card)
 
@@ -117,6 +119,13 @@ async def board(session: AsyncSession = Depends(get_session)) -> FunnelBoardOut:
 async def create_order(
     payload: ProductionOrderCreate, session: AsyncSession = Depends(get_session)
 ):
+    obj = await prepare_order(payload, session)
+    await session.commit()
+    await session.refresh(obj)
+    return obj
+
+
+async def prepare_order(payload: ProductionOrderCreate, session: AsyncSession):
     """Создать наряд. Номер генерируется автоматически, если не задан.
 
     Если ``nh_per_unit`` не задан — подставляется из утверждённой нормы
@@ -139,8 +148,7 @@ async def create_order(
     await session.flush()
     if not obj.number:
         obj.number = f"ПЗ-2026-{obj.id:04d}"
-    await session.commit()
-    await session.refresh(obj)
+    await session.flush()
     return obj
 
 
@@ -152,9 +160,28 @@ async def update_order(
     session: AsyncSession = Depends(get_session),
 ):
     """Сменить этап наряда. При «Готово → склад» — приход на склад (production → wms)."""
-    obj = await session.get(ProductionOrder, order_id)
+    obj = await session.scalar(select(ProductionOrder).where(ProductionOrder.id == order_id)
+        .with_for_update().execution_options(populate_existing=True))
     if obj is None:
         raise HTTPException(status_code=404, detail="Наряд не найден")
+    from modules.production.accounting_ownership import ProductionOrderOwnership
+
+    if await session.get(ProductionOrderOwnership, order_id) is not None:
+        raise HTTPException(409, "Выберите юрлицо наряда для смены этапа")
+    transition_order(obj, payload, session, core)
+    await session.commit()
+    await session.refresh(obj)
+    return obj
+
+
+def transition_order(obj, payload, session, core, organization_id=None):
+    """Caller locks the order and owns transaction and organization authority."""
+    if payload.stage not in {stage['id'] for stage in STAGES}:
+        raise HTTPException(422, "Неизвестный этап производства")
+    if obj.stage == payload.stage:
+        return obj
+    if obj.stage == COMPLETED_STAGE or obj.completed_at is not None:
+        raise HTTPException(status_code=409, detail="Выпуск уже завершён; требуется корректировка выпуска")
     obj.stage = payload.stage
     if payload.stage == COMPLETED_STAGE:
         obj.progress = 100
@@ -168,10 +195,9 @@ async def update_order(
                 "qty": obj.qty,
                 "warehouse": "Главный",
                 "entity_ref": f"production:{obj.id}",
+                **({"organization_id": organization_id} if organization_id is not None else {}),
             },
         )
-    await session.commit()
-    await session.refresh(obj)
     return obj
 
 
@@ -561,9 +587,17 @@ def _ytd_month(year: int) -> int:
     return now.month
 
 
+async def require_legacy_unowned_book(session: AsyncSession):
+    from modules.production.accounting_ownership import ProductionOrderOwnership
+
+    if await session.scalar(select(ProductionOrderOwnership.order_id).limit(1)) is not None:
+        raise HTTPException(409, "Выберите юрлицо: общий просмотр производства недоступен для сопоставленных нарядов")
+
+
 async def _build_plan_board(session: AsyncSession, year: int) -> PlanBoardOut:
     """Собрать матрицу плана/факта за год: план — из ``production_plan``, факт — из
     завершённых нарядов (``completed_at``→fallback ``created_at``), норма — из справочника."""
+    await require_legacy_unowned_book(session)
     plan_rows = (
         await session.execute(select(ProductionPlan).where(ProductionPlan.year == year))
     ).scalars().all()
@@ -655,6 +689,7 @@ async def plan_board(year: int | None = None, session: AsyncSession = Depends(ge
 @router.put("/plan/cell", response_model=PlanBoardOut)
 async def update_plan_cell(payload: PlanCellUpdate, session: AsyncSession = Depends(get_session)):
     """Изменить план одной ячейки (год × изделие × месяц). Возвращает пересчитанную матрицу."""
+    await require_legacy_unowned_book(session)
     await _upsert_plan_cell(session, payload.year, payload.product, payload.month, payload.plan_qty)
     await session.commit()
     return await _build_plan_board(session, payload.year)
@@ -665,6 +700,7 @@ async def upsert_plan_position(
     payload: PlanPositionUpsert, session: AsyncSession = Depends(get_session)
 ):
     """Создать/заменить позицию плана на год целиком (12 значений qty)."""
+    await require_legacy_unowned_book(session)
     for month, qty in enumerate(payload.monthly, start=1):
         await _upsert_plan_cell(session, payload.year, payload.product, month, qty)
     await session.commit()
@@ -676,6 +712,7 @@ async def delete_plan_position(
     year: int, product: str, session: AsyncSession = Depends(get_session)
 ):
     """Удалить позицию из плана (все 12 ячеек года)."""
+    await require_legacy_unowned_book(session)
     rows = (
         await session.execute(
             select(ProductionPlan).where(
