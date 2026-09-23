@@ -1,6 +1,8 @@
 """Pydantic-схемы модуля Production."""
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -106,6 +108,9 @@ class PayrollOut(BaseModel):
     total_base: float
     total_premium: float
     total_payroll: float
+    calculation_scope: Literal["management_estimate"]
+    accounting_posting_available: bool
+    statutory_payroll_certified: bool
 
 
 # ===== ОТК =====

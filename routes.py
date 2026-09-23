@@ -327,7 +327,7 @@ async def update_worker(
 
 @router.get("/payroll", response_model=PayrollOut)
 async def payroll(session: AsyncSession = Depends(get_session)) -> PayrollOut:
-    """Расчёт ЗП по табелю + рейтинг вклада (лидеры по стоимости выработки первыми)."""
+    """Управленческая оценка по табелю; не бухгалтерское начисление."""
     workers = (
         await session.execute(select(ProductionWorker))
     ).scalars().all()
@@ -338,6 +338,9 @@ async def payroll(session: AsyncSession = Depends(get_session)) -> PayrollOut:
         total_base=_round2(sum(r.base for r in rows)),
         total_premium=_round2(sum(r.premium for r in rows)),
         total_payroll=_round2(sum(r.total for r in rows)),
+        calculation_scope="management_estimate",
+        accounting_posting_available=False,
+        statutory_payroll_certified=False,
     )
 
 
