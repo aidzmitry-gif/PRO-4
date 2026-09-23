@@ -273,6 +273,7 @@ class AnalyticsOut(BaseModel):
     pass_rate_pct: float        # (accept + rework) ÷ всего × 100
     scrap_pct: float            # scrap ÷ всего × 100
     premium_fot_byn: float      # Σ (nh_output × премиальная ставка) по табелю
+    financial_scope: Literal["production_planning_estimate"]
     # Серии для графиков
     plan_fact_by_month: list[dict]   # [{month, plan_nh, fact_nh}] ×12
     scrap_reasons: list[dict]        # [{reason, count}] desc

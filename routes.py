@@ -733,7 +733,7 @@ async def delete_plan_position(
 
 @router.get("/analytics", response_model=AnalyticsOut)
 async def analytics(year: int | None = None, session: AsyncSession = Depends(get_session)):
-    """Сводная аналитика цеха: KPI (выработка/эффективность/FPY/брак/ФОТ) + серии для графиков.
+    """Сводная аналитика цеха; денежная премия — только плановая оценка.
 
     Чистый read-model: агрегирует наряды, ОТК, табель и план — своих данных не хранит.
     """
@@ -763,6 +763,7 @@ async def analytics(year: int | None = None, session: AsyncSession = Depends(get
         pass_rate_pct=round((accept + rework) / total * 100, 1) if total else 0.0,
         scrap_pct=round(scrap / total * 100, 1) if total else 0.0,
         premium_fot_byn=round(sum(w.nh_output * PREMIUM_RATE for w in workers), 2),
+        financial_scope="production_planning_estimate",
         plan_fact_by_month=[
             {"month": m + 1, "plan_nh": totals.month_nh[m], "fact_nh": totals.fact_nh[m]}
             for m in range(12)
