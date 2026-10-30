@@ -25,6 +25,9 @@ BEGIN
   SELECT * INTO p FROM wms.location WHERE id=(c->>'location_id')::integer FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Output receiving place is missing'; END IF;
   IF NOT s.is_active OR NULLIF(btrim(s.unit),'') IS NULL OR NOT p.is_active
+    OR p.organization_id IS DISTINCT FROM NEW.organization_id
+    OR NOT EXISTS (SELECT 1 FROM wms.warehouse_directory w
+      WHERE w.organization_id=NEW.organization_id AND w.name=p.warehouse AND w.is_active)
     OR p.warehouse IS DISTINCT FROM c->>'warehouse'
     OR c->'order_id' IS DISTINCT FROM to_jsonb(NEW.order_id)
     OR c->>'request_id' IS DISTINCT FROM NEW.request_id

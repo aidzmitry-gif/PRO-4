@@ -209,7 +209,7 @@ async def preview_output(session, gateway, organization_id, user, command: Outpu
         raise HTTPException(409, "Output requires an active catalog SKU with a unit")
     if warehouse_gateway is None:
         raise HTTPException(503, "Warehouse receiving place service is unavailable")
-    place = await warehouse_gateway.receiving_place(session, command.warehouse, command.location_id)
+    place = await warehouse_gateway.receiving_place(session, organization_id, command.warehouse, command.location_id)
     return {"organization_id": organization_id, "principal": actor,
         "command": command.model_dump(mode="json"), "order_snapshot": snapshot,
         "sku_snapshot": {"id": sku.id, "code": sku.code, "title": sku.title, "unit": sku.unit},

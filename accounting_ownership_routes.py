@@ -240,7 +240,7 @@ async def output_places(org_id: int, q: str = Query(min_length=1, max_length=100
     warehouse = getattr(core.services, "wms_reservations", None)
     if warehouse is None:
         raise HTTPException(503, "Warehouse receiving place service is unavailable")
-    return response(await warehouse.receiving_places(session, q))
+    return response(await warehouse.receiving_places(session, org_id, q))
 
 
 @router.get("/organizations/{org_id}/orders/{order_id}/output-source")
